@@ -12,7 +12,7 @@ load_dotenv()
 
 # Configuration
 OLLAMA_API = "http://localhost:11434/api/generate"
-MODEL = "qwen2.5:0.5b"  # Fallback since qwen3.5:0.8b requires update
+MODEL = "qwen3.5:0.8b"  # Fallback since qwen3.5:0.8b requires update
 RECIPIENT_EMAIL = "phani.s2909@gmail.com"
 THOUGHTS_FILE = "gemini-tanu-corner/thoughts.txt"
 LOG_FILE = "tanu_brain.log"
@@ -75,8 +75,7 @@ def send_email(thought):
 
 def log_performance(duration, thought_length):
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    perf_log = f"[{timestamp}] Model: {MODEL}, Duration: {duration:.2f}s, Length: {thought_length} chars
-"
+    perf_log = f"[{timestamp}] Model: {MODEL}, Duration: {duration:.2f}s, Length: {thought_length} chars\n"
     print(perf_log.strip())
     with open(LOG_FILE, "a") as f:
         f.write(perf_log)
@@ -84,11 +83,8 @@ def log_performance(duration, thought_length):
 def save_thought(thought):
     os.makedirs(os.path.dirname(THOUGHTS_FILE), exist_ok=True)
     with open(THOUGHTS_FILE, "a") as f:
-        f.write(f"--- {time.strftime('%Y-%m-%d %H:%M:%S')} ---
-")
-        f.write(thought + "
-
-")
+        f.write(f"--- {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+        f.write(thought + "\n\n")
 
 if __name__ == "__main__":
     thought, duration = generate_tanu_thought()

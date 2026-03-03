@@ -22,6 +22,6 @@ fi
 mkdir -p gemini-tanu-corner
 
 # 4. Setup Cronjob
-(crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
-echo "Cronjob added: $CRON_JOB"
+(crontab -l 2>/dev/null | grep -v "$PROJECT_DIR/tanu_brain.py"; echo "$CRON_JOB") | crontab -
+echo "Cronjob added/updated: $CRON_JOB"
 echo "Setup complete. Don't forget to fill in the .env file!"
