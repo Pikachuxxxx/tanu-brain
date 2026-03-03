@@ -148,6 +148,10 @@ def git_sync():
     except: pass
 
 if __name__ == '__main__':
+    try:
+        subprocess.run(['git', 'pull', '--rebase'], cwd=BASE_DIR, check=True)
+    except: pass
+
     thought = generate_tanu_thought()
     if thought:
         mood = rate_thought(thought)
