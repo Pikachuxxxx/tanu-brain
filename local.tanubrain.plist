@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <key>local.tanubrain</key>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/phanisrikar/Desktop/Projects/tanu-brain/venv/bin/python3</string>
+        <string>/Users/phanisrikar/Desktop/Projects/tanu-brain/tanu_brain.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/phanisrikar/Desktop/Projects/tanu-brain</string>
+    <key>StartInterval</key>
+    <integer>3600</integer>
+    <key>StandardOutPath</key>
+    <string>/Users/phanisrikar/Desktop/Projects/tanu-brain/tanu_brain.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/phanisrikar/Desktop/Projects/tanu-brain/tanu_brain.log</string>
+</dict>
+</plist>

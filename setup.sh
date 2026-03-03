@@ -16,10 +16,17 @@ fi
 echo "Setting up Tanu Brain in $PROJECT_DIR..."
 
 # 1. Create venv
+if ! python3 -m venv --help &> /dev/null
+then
+    echo "python3-venv is not installed. On RPi/Ubuntu, run: sudo apt install python3-venv"
+    exit 1
+fi
+
 if [ ! -d "venv" ]; then
     python3 -m venv venv
 fi
 source venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 
 # 2. Setup .env if it doesn't exist

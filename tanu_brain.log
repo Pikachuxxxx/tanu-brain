@@ -6,3 +6,8 @@
 [2026-03-03 18:36:18.941421] Mood: 7, Email: Sent
 [2026-03-03 18:46:49.095794] Mood: 8, Email: Sent
 [2026-03-03 20:49:49.420027] Mood: 6, Email: Sent
+[2026-03-03 21:46:06.052708] Mood: 5, Email: Sent
+Traceback (most recent call last):
+  File "/Users/phanisrikar/Desktop/Projects/tanu-brain/tanu_brain.py", line 7, in <module>
+    import matplotlib.pyplot as plt
+ModuleNotFoundError: No module named 'matplotlib'
