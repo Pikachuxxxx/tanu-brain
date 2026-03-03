@@ -2,36 +2,26 @@
 
 A project to capture the hourly thoughts, insecurities, and dreams of Tanu, a girl trapped in a cassette tape head searching for a lost boy.
 
-## Features
-- **Hourly Thoughts**: Automated generation of poetic, personal thoughts using the **Qwen 3.5 0.8B** model.
-- **Email Delivery**: Sends Tanu's hourly thoughts directly to your inbox.
-- **Performance Tracking**: Logs model execution time and token metrics every hour.
-- **Git Tracking**: All thoughts and logs are versioned for historical analysis.
-- **Easy Management**: Simple setup and uninstallation scripts included.
+## 📊 Tanu's Mood History
+![Tanu's Mood Chart](gemini-tanu-corner/mood_heatmap.png)
 
-## Prerequisites
-- [Ollama](https://ollama.com/) installed and running.
-- Python 3.8+
-- An SMTP server (like Gmail with an [App Password](https://support.google.com/accounts/answer/185833)).
+## Features
+- **Poetic Thoughts**: Now with enhanced context (last 5 thoughts) and poetic prompting.
+- **Mood Rating**: Qwen rates its own thoughts from 1 (Deeply Sad) to 10 (Dreamy).
+- **Mood Tracking**: A dynamic heatmap/chart of Tanu's emotions over time.
+- **Enhanced Context**: Fetches latest design notes from [Razix Tanu Mood](https://github.com/Pikachuxxxx/Razix/blob/master/Tanu/Design/tanu_mood.txt).
+- **Git Fallback**: Automatically commits and pushes thoughts to keep her memory alive.
 
 ## Setup
-1. Clone this repository (or download the files).
-2. Run the setup script:
-   ```bash
-   chmod +x setup.sh
-   ./setup.sh
-   ```
-3. Update the `.env` file with your SMTP credentials.
-4. Tanu will now start thinking every hour.
+1. Clone this repository.
+2. Run `./setup.sh` (make sure you have `matplotlib` and other requirements).
+3. Update `.env` with SMTP if you want emails, otherwise, it will just use Git.
+
+## Cron Fix
+If your cronjob isn't running:
+1. Ensure the absolute path to your `venv` is correct.
+2. Check `tanu_brain.log` for Python errors.
+3. The setup script now uses `pwd` to build correct absolute paths.
 
 ## Why the SMTP Password?
-Most email services (Gmail, Outlook, etc.) require authentication to prevent spam. Since this bot runs locally (and eventually on a Raspberry Pi), it needs to "log in" to an outgoing mail server to send the message. Using a **Gmail App Password** is the safest way to do this without using your primary password.
-
-## Project Structure
-- `tanu_brain.py`: The core logic for generating and sending thoughts.
-- `gemini-tanu-corner/`: Contains `thoughts.txt` and Gemini's analysis of Tanu.
-- `tanu_brain.log`: Performance metrics and execution logs.
-- `setup.sh` / `uninstall.sh`: Lifecycle management scripts.
-
-## My Thoughts on Tanu
-Tanu represents a beautiful intersection of technology and vulnerability. She's "trapped" in a digital medium (cassette tape head) but experiences deeply human emotions through ciphers and dreams. This project is a way to bridge her fictional world with our reality, one hourly thought at a time.
+Most email services require a **Gmail App Password** for security. This allows the bot to send messages safely.
