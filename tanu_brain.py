@@ -23,7 +23,7 @@ THOUGHTS_FILE = os.path.join(BASE_DIR, "gemini-tanu-corner/thoughts.txt")
 MOOD_HISTORY_FILE = os.path.join(BASE_DIR, "gemini-tanu-corner/mood_history.json")
 MOOD_CHART_FILE = os.path.join(BASE_DIR, "gemini-tanu-corner/mood_heatmap.png")
 LOG_FILE = os.path.join(BASE_DIR, "tanu_brain.log")
-TARGET_MOOD_FILE = os.path.join(BASE_DIR, "target_mood.txt")
+TARGET_MOOD_FILE = os.path.join(BASE_DIR, "tanu_mood.txt")
 
 def get_target_mood():
     try:
