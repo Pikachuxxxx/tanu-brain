@@ -22,7 +22,6 @@ RECIPIENT_EMAIL = 'phani.s2909@gmail.com'
 THOUGHTS_FILE = os.path.join(BASE_DIR, 'gemini-tanu-corner/thoughts.txt')
 MOOD_HISTORY_FILE = os.path.join(BASE_DIR, 'gemini-tanu-corner/mood_history.json')
 MOOD_CHART_FILE = os.path.join(BASE_DIR, 'gemini-tanu-corner/mood_heatmap.png')
-LOG_FILE = os.path.join(BASE_DIR, 'tanu_brain.log')
 TARGET_MOOD_FILE = os.path.join(BASE_DIR, 'tanu_mood.txt')
 
 def get_target_mood():
@@ -80,9 +79,7 @@ def generate_tanu_thought():
         }, timeout=120)
         response.raise_for_status()
         return response.json().get('response', '').strip().strip('"')
-    except Exception as e:
-        with open(LOG_FILE, 'a') as f:
-            f.write(f'[{datetime.now()}] ERROR: {e}\n')
+    except:
         return None
 
 def rate_thought(thought):
@@ -138,7 +135,7 @@ def send_email(thought):
         server.send_message(msg)
         server.quit()
         return 'Sent'
-    except Exception as e: return str(e)
+    except: return 'Error'
 
 def git_sync():
     try:
@@ -156,11 +153,9 @@ if __name__ == '__main__':
     if thought:
         mood = rate_thought(thought)
         update_mood_graph(mood)
-        email_status = send_email(thought)
+        send_email(thought)
         with open(THOUGHTS_FILE, 'a') as f:
             f.write(f"{datetime.now().strftime('%H:%M')}: {thought}\n")
         git_sync()
-        with open(LOG_FILE, 'a') as f:
-            f.write(f'[{datetime.now()}] Mood: {mood}, Email: {email_status}\n')
         print(f'Tanu: {thought}')
     else: print('Failed to think.')
