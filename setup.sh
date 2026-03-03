@@ -1,27 +1,51 @@
 #!/bin/bash
 
-# Setup Tanu Bot
+# Setup Tanu Brain
 PROJECT_DIR="$(pwd)"
 VENV_DIR="$PROJECT_DIR/venv"
-CRON_JOB="0 * * * * cd $PROJECT_DIR && $VENV_DIR/bin/python3 tanu_brain.py >> $PROJECT_DIR/tanu_brain.log 2>&1"
+CRON_PYTHON="$VENV_DIR/bin/python3"
+LOG_FILE="$PROJECT_DIR/tanu_brain.log"
 
-echo "Setting up Tanu Bot in $PROJECT_DIR..."
+# Check if ollama is installed
+if ! command -v ollama &> /dev/null
+then
+    echo "Ollama is not installed. Please install it from https://ollama.com"
+    exit 1
+fi
+
+echo "Setting up Tanu Brain in $PROJECT_DIR..."
 
 # 1. Create venv
-python3 -m venv venv
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+fi
 source venv/bin/activate
 pip install -r requirements.txt
 
 # 2. Setup .env if it doesn't exist
 if [ ! -f .env ]; then
-    cp .env.template .env
-    echo "PLEASE UPDATE .env WITH YOUR SMTP CREDENTIALS!"
+    if [ -f .env.template ]; then
+        cp .env.template .env
+        echo "PLEASE UPDATE .env WITH YOUR SMTP CREDENTIALS!"
+    else
+        touch .env
+        echo "SMTP_SERVER=smtp.gmail.com" >> .env
+        echo "SMTP_PORT=587" >> .env
+        echo "SMTP_USER=your-email@gmail.com" >> .env
+        echo "SMTP_PASSWORD=your-app-password" >> .env
+        echo "Created .env file. PLEASE UPDATE IT!"
+    fi
 fi
 
-# 3. Create folder for thoughts
+# 3. Create necessary folders
 mkdir -p gemini-tanu-corner
 
 # 4. Setup Cronjob
-(crontab -l 2>/dev/null | grep -v "$PROJECT_DIR/tanu_brain.py"; echo "$CRON_JOB") | crontab -
-echo "Cronjob added/updated: $CRON_JOB"
-echo "Setup complete. Don't forget to fill in the .env file!"
+# We include SHELL and PATH to ensure cron can find ollama and run correctly on macOS
+(crontab -l 2>/dev/null | grep -v "tanu_brain.py"; 
+ echo "SHELL=/bin/bash";
+ echo "PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+ echo "0 * * * * cd $PROJECT_DIR && $CRON_PYTHON tanu_brain.py >> $LOG_FILE 2>&1") | crontab -
+
+echo "Setup complete. Tanu will think every hour."
+echo "Check $LOG_FILE for activity."
