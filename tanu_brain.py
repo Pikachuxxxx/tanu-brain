@@ -65,7 +65,7 @@ def generate_tanu_thought():
     mood = get_target_mood()
     last_thought = get_last_thought()
     # OPTIMIZED EVOLUTION PROMPT
-    prompt = f'I am Tanu. My state: {mood}. My last memory: {last_thought}. Write 1 very short, raw, poetic sentence as "I".'
+    prompt = f'I am Tanu. My state: {mood}. My last memory: {last_thought}. Write 1 very short, raw, poetic sentences'
 
     try:
         response = requests.post(OLLAMA_API, json={
