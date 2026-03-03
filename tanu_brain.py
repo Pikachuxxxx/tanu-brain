@@ -99,7 +99,7 @@ def send_email(thought):
     if not all([smtp_server, smtp_port, smtp_user, smtp_pass]): return "Missing"
     try:
         msg = MIMEMultipart()
-        msg['From'], msg['To'], msg['Subject'] = smtp_user, RECIPIENT_EMAIL, "Tanu"
+        msg['From'], msg['To'], msg['Subject'] = smtp_user, RECIPIENT_EMAIL, "A message from Tanu"
         msg.attach(MIMEText(thought, 'plain'))
         server = smtplib.SMTP(smtp_server, int(smtp_port))
         server.starttls()
