@@ -7,17 +7,32 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$PROJECT_DIR/venv"
 CRON_PYTHON="$VENV_DIR/bin/python3"
 LOG_FILE="$PROJECT_DIR/tanu_brain.log"
+MODEL="qwen2.5:0.5b"
 
 echo "Setting up Tanu Brain in $PROJECT_DIR..."
 
-# 0. Check for Ollama
+# 0. Install/Check for Ollama
 if ! command -v ollama &> /dev/null
 then
-    echo "⚠️ Ollama is not installed. Please install it from https://ollama.com"
-    echo "After installation, remember to pull the model: ollama pull qwen2.5:0.5b"
+    echo "📦 Ollama not found. Attempting to install..."
+    if [[ "$OSTYPE" == "linux-gnueabihf" || "$OSTYPE" == "linux-gnu" ]]; then
+        # Official Ollama install script for Linux/RPi
+        curl -fsSL https://ollama.com/install.sh | sh
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "⚠️ On macOS, please download and install the Ollama app from https://ollama.com/download"
+        echo "After installing, run this script again."
+        exit 1
+    else
+        echo "⚠️ Unknown OS. Please install Ollama manually from https://ollama.com"
+        exit 1
+    fi
 fi
 
-# 1. Check for Python venv module
+# 1. Pull the model
+echo "📥 Pulling model: $MODEL..."
+ollama pull "$MODEL"
+
+# 2. Check for Python venv module
 if ! python3 -m venv --help &> /dev/null
 then
     echo "⚠️ python3-venv is not installed."
@@ -25,8 +40,8 @@ then
     exit 1
 fi
 
-# 2. Create/Update Virtual Environment
-echo "📦 Setting up virtual environment..."
+# 3. Create/Update Virtual Environment
+echo "🐍 Setting up virtual environment..."
 if [ ! -d "$VENV_DIR" ]; then
     python3 -m venv "$VENV_DIR"
 fi
@@ -39,7 +54,7 @@ else
     echo "⚠️ requirements.txt not found!"
 fi
 
-# 3. Setup .env
+# 4. Setup .env
 echo "🔑 Checking .env configuration..."
 cd "$PROJECT_DIR"
 if [ ! -f .env ]; then
@@ -57,25 +72,18 @@ EOF
     fi
 fi
 
-# 4. Create necessary folders
+# 5. Create necessary folders
 mkdir -p "$PROJECT_DIR/gemini-tanu-corner"
 
-# 5. Setup Cronjob (Hourly)
+# 6. Setup Cronjob (Hourly)
 echo "⏰ Setting up hourly cronjob..."
-# Create a temporary file for the new crontab
 TMP_CRON=$(mktemp)
-
-# Export current crontab, removing existing tanu-brain entries and global shell/path overrides we might have added
 crontab -l 2>/dev/null | grep -v "tanu_brain.py" | grep -v "SHELL=/bin/bash" | grep -v "PATH=/usr/local/bin" > "$TMP_CRON"
-
-# Append clean configuration
 {
     echo "SHELL=/bin/bash"
     echo "PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     echo "0 * * * * cd $PROJECT_DIR && $CRON_PYTHON tanu_brain.py >> $LOG_FILE 2>&1"
 } >> "$TMP_CRON"
-
-# Install new crontab
 crontab "$TMP_CRON"
 rm "$TMP_CRON"
 
