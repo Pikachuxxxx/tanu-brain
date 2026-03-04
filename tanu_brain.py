@@ -84,7 +84,7 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 1.1,
-                    'num_predict': 45,
+                    'num_predict': 100,
                     'top_p': 0.9,
                     'presence_penalty': 0.6,
                     'repeat_penalty': 1.2,
