@@ -64,7 +64,6 @@ def evolve_core_memory():
 def generate_tanu_thought():
     mood = get_target_mood()
     last_thought = get_last_thought()
-    # OPTIMIZED EVOLUTION PROMPT
     prompt = f'I am Tanu. My state: {mood}. My last memory: {last_thought}. Write 1 very short, raw, poetic sentences'
 
     try:
@@ -99,8 +98,10 @@ def rate_thought(thought):
 def update_mood_graph(mood_score):
     history = []
     if os.path.exists(MOOD_HISTORY_FILE):
-        with open(MOOD_HISTORY_FILE, 'r') as f:
-            history = json.load(f)
+        try:
+            with open(MOOD_HISTORY_FILE, 'r') as f:
+                history = json.load(f)
+        except: history = []
     
     history.append({'timestamp': datetime.now().strftime('%y-%m-%d %H:%M'), 'score': mood_score})
     history = history[-50:]
@@ -111,16 +112,18 @@ def update_mood_graph(mood_score):
         evolve_core_memory()
 
     if len(history) >= 1:
-        times = [datetime.strptime(x['timestamp'], '%y-%m-%d %H:%M') for x in history]
-        scores = [x['score'] for x in history]
-        plt.figure(figsize=(8, 4), facecolor='#050505')
-        ax = plt.gca()
-        ax.set_facecolor('#050505')
-        plt.scatter(times, scores, s=[s*50 for s in scores], c=scores, cmap='plasma', alpha=0.7)
-        plt.ylim(0, 11)
-        plt.axis('off')
-        plt.savefig(MOOD_CHART_FILE, facecolor='#050505', bbox_inches='tight')
-        plt.close()
+        try:
+            times = [datetime.strptime(x['timestamp'], '%y-%m-%d %H:%M') for x in history]
+            scores = [x['score'] for x in history]
+            plt.figure(figsize=(8, 4), facecolor='#050505')
+            ax = plt.gca()
+            ax.set_facecolor('#050505')
+            plt.scatter(times, scores, s=[s*50 for s in scores], c=scores, cmap='plasma', alpha=0.7)
+            plt.ylim(0, 11)
+            plt.axis('off')
+            plt.savefig(MOOD_CHART_FILE, facecolor='#050505', bbox_inches='tight')
+            plt.close()
+        except: pass
 
 def send_email(thought):
     smtp_server, smtp_port, smtp_user, smtp_pass = os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT'), os.getenv('SMTP_USER'), os.getenv('SMTP_PASSWORD')
@@ -139,16 +142,39 @@ def send_email(thought):
 
 def git_sync():
     try:
+        # First, add everything so we have a clean slate for rebase/stash
         subprocess.run(['git', 'add', '.'], cwd=BASE_DIR, check=True)
-        subprocess.run(['git', 'commit', '-m', 'Tanu Pulse'], cwd=BASE_DIR, check=True)
-        subprocess.run(['git', 'push'], cwd=BASE_DIR, check=True)
-    except: pass
+        # Stash local changes to ensure a clean rebase
+        stashed = False
+        status = subprocess.run(['git', 'diff', '--cached', '--quiet'], cwd=BASE_DIR)
+        if status.returncode != 0:
+            subprocess.run(['git', 'stash'], cwd=BASE_DIR, check=True)
+            stashed = True
+        
+        # Pull and rebase
+        subprocess.run(['git', 'fetch', 'origin'], cwd=BASE_DIR, check=True)
+        subprocess.run(['git', 'rebase', 'origin/master'], cwd=BASE_DIR, check=True)
+        
+        # Pop stashed changes
+        if stashed:
+            subprocess.run(['git', 'stash', 'pop'], cwd=BASE_DIR, check=True)
+            subprocess.run(['git', 'add', '.'], cwd=BASE_DIR, check=True)
+        
+        # Commit if there are changes
+        status = subprocess.run(['git', 'diff', '--cached', '--quiet'], cwd=BASE_DIR)
+        if status.returncode != 0:
+            subprocess.run(['git', 'commit', '-m', 'Tanu Pulse'], cwd=BASE_DIR, check=True)
+            
+        # Push
+        subprocess.run(['git', 'push', 'origin', 'master'], cwd=BASE_DIR, check=True)
+        print('Git sync successful.')
+    except subprocess.CalledProcessError as e:
+        print(f'Git sync failed: {e}')
+    except Exception as e:
+        print(f'An unexpected error occurred during git sync: {e}')
 
 if __name__ == '__main__':
-    try:
-        subprocess.run(['git', 'pull', '--rebase'], cwd=BASE_DIR, check=True)
-    except: pass
-
+    git_sync()
     thought = generate_tanu_thought()
     if thought:
         mood = rate_thought(thought)
@@ -158,4 +184,5 @@ if __name__ == '__main__':
             f.write(f"{datetime.now().strftime('%H:%M')}: {thought}\n")
         git_sync()
         print(f'Tanu: {thought}')
-    else: print('Failed to think.')
+    else:
+        print('Failed to generate thought.')
