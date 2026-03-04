@@ -43,7 +43,7 @@ def get_last_thought():
 def evolve_core_memory():
     current_mood = get_target_mood()
     last_thought = get_last_thought()
-    prompt = f'Task: Evolve Tanu\'s journey. Current identity: {current_mood}. Recent memory: {last_thought}. Write a new, slightly evolved 1-2 sentence core identity showing how I escape the trauma of my own making, slip and evolve, and own up myself with the sanity to become happy. Identity:'
+    prompt = f'Task: Evolve Tanu\'s journey. Current identity: {current_mood}. Recent memory: {last_thought}. Write a new core identity (1-2 sentences) showing my messy evolution—how I battle insecurity, fall back to bad habits, and escape trauma while still reaching for the sanity to be happy. Identity:'
     print(f"Evolving core memory. Current: {current_mood}")
     try:
         response = requests.post(OLLAMA_API, json={
@@ -75,7 +75,7 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        prompt = f'I am Tanu, the girl solving the Boy\'s ciphers. Core identity: {mood}. Last memory: {last_thought}. Task: Write one very short, raw, poetic sentence about escaping my own trauma, my self-coding heart, my sanity to become happy, or my evolution beyond the House of Veils. Use modern, raw, and mysterious language. AVOID archaic words. Result:'
+        prompt = f'I am Tanu, a girl in a gilded cage. Core identity: {mood}. Last memory: {last_thought}. Task: Write one very short, raw, poetic sentence about escaping trauma, the sting of my insecurity, the pull of my bad habits, or my desperate need to be happy. Be raw, vulnerable, and modern. Result:'
 
         try:
             response = requests.post(OLLAMA_API, json={
