@@ -75,7 +75,7 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        prompt = f'I am Tanu, the girl solving the Boy\'s ciphers. Core identity: {mood}. Last memory: {last_thought}. Task: Write one very short, raw, poetic sentence about my dreams, my shifting clothes, the 66 arts, or the Boy in the parallel timeline. Be creative, surprising, and completely different from my last memory. Result:'
+        prompt = f'I am Tanu, the girl solving the Boy\'s ciphers. Core identity: {mood}. Last memory: {last_thought}. Task: Write one very short, raw, poetic sentence about my dreams, my shifting clothes, the 66 arts, or the Boy in the parallel timeline. Use modern, raw, and mysterious language. AVOID archaic words like "thou", "thee", "hath", "amidst", or Shakespearean style. Result:'
 
         try:
             response = requests.post(OLLAMA_API, json={
@@ -90,7 +90,7 @@ def generate_tanu_thought():
                     'repeat_penalty': 1.2,
                     'num_ctx': 512,
                     'num_thread': 4,
-                    'stop': ["\n\n", "Result:", "Tanu:"]
+                    'stop': ["\n\n", "Result:", "Tanu:", "("]
                 }
             }, timeout=120)
             response.raise_for_status()
