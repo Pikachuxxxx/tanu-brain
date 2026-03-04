@@ -43,7 +43,7 @@ def get_last_thought():
 def evolve_core_memory():
     current_mood = get_target_mood()
     last_thought = get_last_thought()
-    prompt = f'Task: Evolve Tanu\'s core identity. Current identity: {current_mood}. Recent memory: {last_thought}. Write a new, slightly evolved 1-2 sentence personal core identity for Tanu that reflects growth or change. Identity:'
+    prompt = f'Task: Evolve Tanu\'s journey. Current identity: {current_mood}. Recent dream memory: {last_thought}. Write a new, slightly evolved 1-2 sentence core identity for Tanu that shows her getting closer to the Boy, mastering her emotional clothes, or uncovering a deeper piece of the cipher. Identity:'
     print(f"Evolving core memory. Current: {current_mood}")
     try:
         response = requests.post(OLLAMA_API, json={
@@ -60,7 +60,7 @@ def evolve_core_memory():
         }, timeout=120)
         new_mood = response.json().get('response', '').strip().strip('"')
         print(f"New identity candidate: {new_mood}")
-        if new_mood and len(new_mood) > 10:
+        if new_mood and len(new_mood) > 15:
             with open(TARGET_MOOD_FILE, 'w') as f:
                 f.write(new_mood)
             print("Successfully evolved core memory.")
@@ -75,7 +75,7 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        prompt = f'I am Tanu. My core identity: {mood}. My last memory: {last_thought}. Task: Write one very short, raw, poetic sentence that is completely different from my last memory. Be creative and surprising. Result:'
+        prompt = f'I am Tanu, the girl solving the Boy\'s ciphers. Core identity: {mood}. Last memory: {last_thought}. Task: Write one very short, raw, poetic sentence about my dreams, my shifting clothes, the 66 arts, or the Boy in the parallel timeline. Be creative, surprising, and completely different from my last memory. Result:'
 
         try:
             response = requests.post(OLLAMA_API, json={
@@ -84,9 +84,9 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 1.1,
-                    'num_predict': 40,
+                    'num_predict': 45,
                     'top_p': 0.9,
-                    'presence_penalty': 0.5,
+                    'presence_penalty': 0.6,
                     'repeat_penalty': 1.2,
                     'num_ctx': 512,
                     'num_thread': 4,
