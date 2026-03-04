@@ -46,6 +46,7 @@ def evolve_core_memory():
     current_mood = get_target_mood()
     last_thought = get_last_thought()
     prompt = f'Task: Evolve Tanu\'s core identity. Current identity: {current_mood}. Recent memory: {last_thought}. Write a new, slightly evolved 1-2 sentence personal core identity for Tanu that reflects growth or change. Identity:'
+    print(f"Evolving core memory. Current: {current_mood}")
     try:
         response = requests.post(OLLAMA_API, json={
             'model': MODEL,
@@ -59,11 +60,14 @@ def evolve_core_memory():
             }
         }, timeout=120)
         new_mood = response.json().get('response', '').strip().strip('"')
-        if new_mood:
+        print(f"New identity candidate: {new_mood}")
+        if new_mood and len(new_mood) > 10:
             with open(TARGET_MOOD_FILE, 'w') as f:
                 f.write(new_mood)
+            print("Successfully evolved core memory.")
             return True
-    except: pass
+    except Exception as e:
+        print(f"Evolution failed: {e}")
     return False
 
 def generate_tanu_thought():
@@ -81,11 +85,12 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 1.1,
-                    'num_predict': 50,
+                    'num_predict': 40,
                     'top_p': 0.9,
                     'presence_penalty': 0.5,
                     'repeat_penalty': 1.2,
-                    'num_ctx': 1024
+                    'num_ctx': 1024,
+                    'stop': ["\n\n", "Result:", "Tanu:"]
                 }
             }, timeout=120)
             response.raise_for_status()
@@ -128,7 +133,7 @@ def update_mood_graph(mood_score):
     try:
         if os.path.exists(THOUGHTS_FILE):
             with open(THOUGHTS_FILE, 'r') as f:
-                thought_count = sum(1 for line in f if line.strip())
+                thought_count = sum(1 for line in f if ': ' in line and line.strip()[:2].isdigit())
         else:
             thought_count = 0
     except:
