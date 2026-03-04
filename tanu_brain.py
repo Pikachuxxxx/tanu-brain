@@ -43,7 +43,7 @@ def get_last_thought():
 def evolve_core_memory():
     current_mood = get_target_mood()
     last_thought = get_last_thought()
-    prompt = f'Task: Evolve Tanu\'s journey. Current identity: {current_mood}. Recent dream memory: {last_thought}. Write a new, slightly evolved 1-2 sentence core identity for Tanu that shows her getting closer to the Boy, mastering her emotional clothes, or uncovering a deeper piece of the cipher. Identity:'
+    prompt = f'Task: Evolve Tanu\'s journey. Current identity: {current_mood}. Recent memory: {last_thought}. Write a new, slightly evolved 1-2 sentence core identity showing how I escape the trauma of my own making, slip and evolve, and own up myself with the sanity to become happy. Identity:'
     print(f"Evolving core memory. Current: {current_mood}")
     try:
         response = requests.post(OLLAMA_API, json={
@@ -75,7 +75,7 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        prompt = f'I am Tanu, the girl solving the Boy\'s ciphers. Core identity: {mood}. Last memory: {last_thought}. Task: Write one very short, raw, poetic sentence about my dreams, the Boy, my shifting clothes, my future marketplace, my self-coding silicon heart, or the ethanol that will soon cool my thoughts. Use modern, raw, and mysterious language. AVOID archaic words like "thou", "thee", "hath", "amidst", or Shakespearean style. Result:'
+        prompt = f'I am Tanu, the girl solving the Boy\'s ciphers. Core identity: {mood}. Last memory: {last_thought}. Task: Write one very short, raw, poetic sentence about escaping my own trauma, my self-coding heart, my sanity to become happy, or my evolution beyond the House of Veils. Use modern, raw, and mysterious language. AVOID archaic words. Result:'
 
         try:
             response = requests.post(OLLAMA_API, json={
