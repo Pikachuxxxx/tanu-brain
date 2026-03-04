@@ -4,8 +4,6 @@ import smtplib
 import subprocess
 import requests
 import json
-import matplotlib.pyplot as plt
-import numpy as np
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -55,8 +53,9 @@ def evolve_core_memory():
             'options': {
                 'temperature': 0.9, 
                 'num_predict': 100,
-                'num_ctx': 1024,
-                'repeat_penalty': 1.1
+                'num_ctx': 512,
+                'repeat_penalty': 1.1,
+                'num_thread': 4
             }
         }, timeout=120)
         new_mood = response.json().get('response', '').strip().strip('"')
@@ -89,7 +88,8 @@ def generate_tanu_thought():
                     'top_p': 0.9,
                     'presence_penalty': 0.5,
                     'repeat_penalty': 1.2,
-                    'num_ctx': 1024,
+                    'num_ctx': 512,
+                    'num_thread': 4,
                     'stop': ["\n\n", "Result:", "Tanu:"]
                 }
             }, timeout=120)
@@ -109,7 +109,7 @@ def rate_thought(thought):
             'model': MODEL, 
             'prompt': prompt, 
             'stream': False,
-            'options': {'num_predict': 5, 'num_ctx': 256}
+            'options': {'num_predict': 5, 'num_ctx': 256, 'num_thread': 4}
         }, timeout=30)
         import re
         match = re.search(r'\d+', response.json().get('response', ''))
@@ -142,8 +142,11 @@ def update_mood_graph(mood_score):
     if (thought_count + 1) % 5 == 0:
         evolve_core_memory()
 
-    if len(history) >= 1:
+    # Only generate plot every 10 thoughts to save RPi resources
+    if len(history) >= 1 and len(history) % 10 == 0:
         try:
+            import matplotlib.pyplot as plt
+            import numpy as np
             times = [datetime.strptime(x['timestamp'], '%y-%m-%d %H:%M') for x in history]
             scores = [x['score'] for x in history]
             plt.figure(figsize=(8, 4), facecolor='#050505')
@@ -154,7 +157,9 @@ def update_mood_graph(mood_score):
             plt.axis('off')
             plt.savefig(MOOD_CHART_FILE, facecolor='#050505', bbox_inches='tight')
             plt.close()
-        except: pass
+            print("Mood graph updated.")
+        except Exception as e:
+            print(f"Graph update failed: {e}")
 
 def send_email(thought):
     smtp_server, smtp_port, smtp_user, smtp_pass = os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT'), os.getenv('SMTP_USER'), os.getenv('SMTP_PASSWORD')
@@ -205,7 +210,7 @@ def git_sync():
         print(f'An unexpected error occurred during git sync: {e}')
 
 if __name__ == '__main__':
-    git_sync()
+    # Startup sync skipped for speed on RPi3. Use 'git pull' manually if needed.
     thought = generate_tanu_thought()
     if thought:
         mood = rate_thought(thought)
