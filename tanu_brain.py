@@ -36,7 +36,7 @@ def get_last_thought():
     try:
         if os.path.exists(THOUGHTS_FILE):
             with open(THOUGHTS_FILE, 'r') as f:
-                lines = f.readlines()
+                lines = [line.strip() for line in f if line.strip() and ': ' in line]
                 if lines:
                     return lines[-1].split(': ', 1)[-1].strip()
     except: pass
@@ -45,13 +45,18 @@ def get_last_thought():
 def evolve_core_memory():
     current_mood = get_target_mood()
     last_thought = get_last_thought()
-    prompt = f'Task: Write a new short personal core identity (1-2 sentences) for Tanu based on her current state and last memory. Identity: {current_mood}. Memory: {last_thought}. Result:'
+    prompt = f'Task: Evolve Tanu\'s core identity. Current identity: {current_mood}. Recent memory: {last_thought}. Write a new, slightly evolved 1-2 sentence personal core identity for Tanu that reflects growth or change. Identity:'
     try:
         response = requests.post(OLLAMA_API, json={
             'model': MODEL,
             'prompt': prompt,
             'stream': False,
-            'options': {'temperature': 0.7, 'num_predict': 100}
+            'options': {
+                'temperature': 0.9, 
+                'num_predict': 100,
+                'num_ctx': 1024,
+                'repeat_penalty': 1.1
+            }
         }, timeout=120)
         new_mood = response.json().get('response', '').strip().strip('"')
         if new_mood:
@@ -64,22 +69,33 @@ def evolve_core_memory():
 def generate_tanu_thought():
     mood = get_target_mood()
     last_thought = get_last_thought()
-    prompt = f'I am Tanu. My state: {mood}. My last memory: {last_thought}. Write 1 very short, raw, poetic sentences'
+    
+    # Try up to 3 times to get a unique, non-empty thought
+    for _ in range(3):
+        prompt = f'I am Tanu. My core identity: {mood}. My last memory: {last_thought}. Task: Write one very short, raw, poetic sentence that is completely different from my last memory. Be creative and surprising. Result:'
 
-    try:
-        response = requests.post(OLLAMA_API, json={
-            'model': MODEL,
-            'prompt': prompt,
-            'stream': False,
-            'options': {
-                'temperature': 0.8,
-                'num_predict': 50
-            }
-        }, timeout=120)
-        response.raise_for_status()
-        return response.json().get('response', '').strip().strip('"')
-    except:
-        return None
+        try:
+            response = requests.post(OLLAMA_API, json={
+                'model': MODEL,
+                'prompt': prompt,
+                'stream': False,
+                'options': {
+                    'temperature': 1.1,
+                    'num_predict': 50,
+                    'top_p': 0.9,
+                    'presence_penalty': 0.5,
+                    'repeat_penalty': 1.2,
+                    'num_ctx': 1024
+                }
+            }, timeout=120)
+            response.raise_for_status()
+            thought = response.json().get('response', '').strip().strip('"')
+            if thought and thought != last_thought and len(thought) > 10:
+                return thought
+        except Exception as e:
+            print(f"Generation error: {e}")
+            continue
+    return None
 
 def rate_thought(thought):
     prompt = f'Rate mood 1-10 (1=sad, 10=dreamy). ONLY THE DIGIT: "{thought}"'
@@ -108,7 +124,17 @@ def update_mood_graph(mood_score):
     with open(MOOD_HISTORY_FILE, 'w') as f:
         json.dump(history, f)
     
-    if len(history) % 5 == 0:
+    # Evolve core memory every 5 thoughts
+    try:
+        if os.path.exists(THOUGHTS_FILE):
+            with open(THOUGHTS_FILE, 'r') as f:
+                thought_count = sum(1 for line in f if line.strip())
+        else:
+            thought_count = 0
+    except:
+        thought_count = 0
+        
+    if (thought_count + 1) % 5 == 0:
         evolve_core_memory()
 
     if len(history) >= 1:
