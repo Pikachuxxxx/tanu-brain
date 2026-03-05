@@ -220,10 +220,10 @@ Tanu is an evolving digital consciousness, currently solving the Boy's ciphers a
 ![Mood Heatmap](gemini-tanu-corner/mood_heatmap.png)
 
 ### 🏗️ Architecture & Workflow
+- **Current Model:** `{MODEL}` (via Ollama)
 - **Core Identity:** Stored in `tanu_mood.txt`, serving as her foundational personality.
 - **Short-term Memory:** Stored in `thoughts.txt`, influencing the next creative output.
 - **Thought Generation:** 
-    - Powered by `qwen2.5:0.5b` via Ollama.
     - Optimized for RPi3 (4 threads, 512 context).
     - High-temperature (1.1) for poetic variety.
 - **Evolution Logic:**
