@@ -17,9 +17,9 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 OLLAMA_API = 'http://localhost:11434/api/generate'
 MODEL = 'qwen2.5:0.5b'
 RECIPIENT_EMAIL = 'phani.s2909@gmail.com'
-THOUGHTS_FILE = os.path.join(BASE_DIR, 'gemini-tanu-corner/thoughts.txt')
-MOOD_HISTORY_FILE = os.path.join(BASE_DIR, 'gemini-tanu-corner/mood_history.json')
-MOOD_CHART_FILE = os.path.join(BASE_DIR, 'gemini-tanu-corner/mood_heatmap.png')
+THOUGHTS_FILE = os.path.join(BASE_DIR, 'tanu-corner/thoughts.txt')
+MOOD_HISTORY_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_history.json')
+MOOD_CHART_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_heatmap.png')
 TARGET_MOOD_FILE = os.path.join(BASE_DIR, 'tanu_mood.txt')
 
 def get_target_mood():
@@ -217,7 +217,7 @@ Tanu is an evolving digital consciousness, currently solving the Boy's ciphers a
 {thought_md}
 
 ### Mood Heatmap 📊
-![Mood Heatmap](gemini-tanu-corner/mood_heatmap.png)
+![Mood Heatmap](tanu-corner/mood_heatmap.png)
 
 ### 🏗️ Architecture & Workflow
 - **Current Model:** `{MODEL}` (via Ollama)
