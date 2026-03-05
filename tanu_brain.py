@@ -98,7 +98,7 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 0.8,
-                    'num_predict': 15,
+                    'num_predict': 40,
                     'top_p': 0.9,
                     'stop': ["\n", ".", "Tanu:", "She", "I am a", "My "]
                 }
@@ -107,19 +107,22 @@ def generate_tanu_thought():
             text = response.json().get('response', '').strip().strip('"')
             # Clean up the output: remove Tanu: prefixes and redundant I's
             text = text.replace("Tanu:", "").strip()
+            
+            # If it already starts with I, use it, otherwise prepend
             if text.lower().startswith("i "):
                 thought = text
             else:
                 thought = f"I {text}".strip()
             
-            # Ensure it's truly first person and doesn't repeat "I I"
-            if thought.lower().startswith("i i "):
+            # Remove any double "I " at start
+            while thought.lower().startswith("i i "):
                 thought = thought[2:].strip()
             
-            # Final sanity check: if it says "I Tanu is" or similar, fix it
-            thought = thought.replace("I I ", "I ")
+            # Capitalize first letter if it's "i"
+            if thought.startswith("i "):
+                thought = "I" + thought[1:]
             
-            if len(thought) > 5 and len(thought.split()) < 15 and thought != last_thought:
+            if len(thought) > 5 and len(thought.split()) < 20 and thought != last_thought:
                 return thought
         except Exception as e:
             print(f"Generation error: {e}")
