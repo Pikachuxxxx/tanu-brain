@@ -82,13 +82,12 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        # Extremely strict prompt for Qwen 0.5b to stop it from rambling
         prompt = (
-            f"Context: I am Tanu. I live in a house I hate. I solve ciphers. I want to be happy.\n"
+            f"Tanu: a casual girl in a house she hates. Not a poet.\n"
             f"Mood: {mood}\n"
-            f"Last thought: {last_thought}\n"
-            f"Task: Write ONE very short casual sentence (max 10 words) starting with 'I'. "
-            f"No poetry. No metaphors. Just a direct thought like a text message.\n"
+            f"Bad examples: 'I am a fragment of a soul', 'The moon whispers'.\n"
+            f"Good examples: 'I need a cigarette.', 'I finally cracked that code.', 'I hate this house.'\n"
+            f"Task: Write one very short, casual sentence starting with 'I'.\n"
             f"Thought: I"
         )
 
@@ -99,15 +98,20 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 0.8,
-                    'num_predict': 20, # Very short to force brevity
+                    'num_predict': 15,
                     'top_p': 0.9,
                     'stop': ["\n", ".", "Tanu:", "She", "I am a", "My "]
                 }
             }, timeout=120)
             response.raise_for_status()
             text = response.json().get('response', '').strip().strip('"')
-            thought = f"I {text}".strip()
-            if len(thought) > 5 and thought != last_thought:
+            # Clean up the output in case it repeats "I"
+            if text.lower().startswith("i "):
+                thought = text
+            else:
+                thought = f"I {text}".strip()
+            
+            if len(thought) > 5 and len(thought.split()) < 15 and thought != last_thought:
                 return thought
         except Exception as e:
             print(f"Generation error: {e}")
