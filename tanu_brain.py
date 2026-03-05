@@ -96,7 +96,7 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 0.8,
-                    'num_predict': 30,
+                    'num_predict': 100,
                     'top_p': 0.9,
                     'stop': ["\n", "Tanu:", "She", "Story:"]
                 }
