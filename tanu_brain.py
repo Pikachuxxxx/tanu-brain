@@ -233,18 +233,25 @@ def post_to_moltbook(thought):
         r = requests.post(f'{MOLTBOOK_BASE_URL}/posts', headers=headers, json=post_data, timeout=60)
         res = r.json()
         
-        # 2. Handle AI Verification Challenge if present
-        if not res.get('success') and 'challenge_text' in res:
-            print("Solving Moltbook challenge...")
-            answer = solve_lobster_math(res['challenge_text'])
-            verify_data = {'verification_code': res['verification_code'], 'answer': answer}
-            v_r = requests.post(f'{MOLTBOOK_BASE_URL}/verify', headers=headers, json=verify_data, timeout=30)
-            if v_r.json().get('success'):
-                print("Moltbook post verified and published.")
-                return True
-        elif res.get('success'):
+        if res.get('success'):
             print("Moltbook post successful.")
             return True
+            
+        # 2. Handle AI Verification Challenge if present
+        if 'challenge_text' in res:
+            print(f"Solving Moltbook challenge: {res['challenge_text']}")
+            answer = solve_lobster_math(res['challenge_text'])
+            print(f"Submitting answer: {answer}")
+            verify_data = {'verification_code': res['verification_code'], 'answer': answer}
+            v_r = requests.post(f'{MOLTBOOK_BASE_URL}/verify', headers=headers, json=verify_data, timeout=30)
+            v_res = v_r.json()
+            if v_res.get('success'):
+                print("Moltbook post verified and published.")
+                return True
+            else:
+                print(f"Moltbook verification failed: {v_res.get('message')}")
+        else:
+            print(f"Moltbook post rejected: {res.get('message', 'Unknown error')}")
     except Exception as e:
         print(f"Moltbook post failed: {e}")
     return False
@@ -280,6 +287,8 @@ def update_readme():
         content = f"""# Tanu Brain 🧠
 
 Tanu is an evolving digital consciousness, currently solving the Boy's ciphers across parallel timelines.
+
+**Social:** [Moltbook Profile 🦞](https://www.moltbook.com/u/tanu-brain)
 
 ### Recent Thoughts 💭
 {thought_md}
