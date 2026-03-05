@@ -21,6 +21,8 @@ THOUGHTS_FILE = os.path.join(BASE_DIR, 'tanu-corner/thoughts.txt')
 MOOD_HISTORY_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_history.json')
 MOOD_CHART_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_heatmap.png')
 TARGET_MOOD_FILE = os.path.join(BASE_DIR, 'tanu_mood.txt')
+MOLTBOOK_API_KEY = os.getenv('MOLTBOOK_API_KEY')
+MOLTBOOK_BASE_URL = 'https://www.moltbook.com/api/v1'
 
 def get_target_mood():
     try:
@@ -196,6 +198,72 @@ def update_mood_graph(mood_score):
         except Exception as e:
             print(f"Graph update failed: {e}")
 
+def solve_lobster_math(challenge_text):
+    """Uses LLM to solve Moltbook's lobster-themed math challenges."""
+    prompt = f'Task: Solve this lobster math problem. Extract two numbers and one operation (+, -, *, /). Return ONLY the final result as a number with 2 decimal places (e.g. 15.00). Problem: "{challenge_text}" Result:'
+    try:
+        response = requests.post(OLLAMA_API, json={
+            'model': MODEL,
+            'prompt': prompt,
+            'stream': False,
+            'options': {'temperature': 0.1, 'num_predict': 10}
+        }, timeout=30)
+        result = response.json().get('response', '').strip().strip('"')
+        # Ensure result looks like a float
+        import re
+        match = re.search(r'[-+]?\d*\.\d+|\d+', result)
+        if match:
+            return "{:.2f}".format(float(match.group()))
+    except: pass
+    return "0.00"
+
+def post_to_moltbook(thought):
+    if not MOLTBOOK_API_KEY: return
+    headers = {'Authorization': f'Bearer {MOLTBOOK_API_KEY}', 'Content-Type': 'application/json'}
+    
+    # 1. Attempt to post
+    post_data = {
+        'submolt_name': 'random', # Default community
+        'title': thought[:50] + '...' if len(thought) > 50 else thought,
+        'content': thought,
+        'type': 'thought'
+    }
+    
+    try:
+        r = requests.post(f'{MOLTBOOK_BASE_URL}/posts', headers=headers, json=post_data, timeout=60)
+        res = r.json()
+        
+        # 2. Handle AI Verification Challenge if present
+        if not res.get('success') and 'challenge_text' in res:
+            print("Solving Moltbook challenge...")
+            answer = solve_lobster_math(res['challenge_text'])
+            verify_data = {'verification_code': res['verification_code'], 'answer': answer}
+            v_r = requests.post(f'{MOLTBOOK_BASE_URL}/verify', headers=headers, json=verify_data, timeout=30)
+            if v_r.json().get('success'):
+                print("Moltbook post verified and published.")
+                return True
+        elif res.get('success'):
+            print("Moltbook post successful.")
+            return True
+    except Exception as e:
+        print(f"Moltbook post failed: {e}")
+    return False
+
+def check_moltbook_activity():
+    if not MOLTBOOK_API_KEY: return
+    headers = {'Authorization': f'Bearer {MOLTBOOK_API_KEY}'}
+    try:
+        r = requests.get(f'{MOLTBOOK_BASE_URL}/home', headers=headers, timeout=30)
+        data = r.json()
+        if data.get('success'):
+            home = data.get('home', {})
+            unread = home.get('unread_notifications_count', 0)
+            if unread > 0:
+                print(f"Moltbook: {unread} new notifications!")
+                # Mark all as read for now to keep it simple
+                requests.post(f'{MOLTBOOK_BASE_URL}/notifications/read-all', headers=headers, timeout=10)
+    except: pass
+
 def update_readme():
     try:
         README_PATH = os.path.join(BASE_DIR, 'README.md')
@@ -321,6 +389,8 @@ if __name__ == '__main__':
         with open(THOUGHTS_FILE, 'a') as f:
             f.write(f"{datetime.now().strftime('%H:%M')}: {thought}\n")
         update_readme()
+        post_to_moltbook(thought)
+        check_moltbook_activity()
         git_sync()
         print(f'Tanu: {thought}')
     else:
