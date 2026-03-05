@@ -44,11 +44,10 @@ def evolve_core_memory():
     current_mood = get_target_mood()
     last_thought = get_last_thought()
     prompt = (
-        f"Tanu's soul: {current_mood}\n"
-        f"Last echo: {last_thought}\n"
-        f"Rewrite her core identity. 1-2 sentences, under 40 words. First person. "
-        f"Must weave: gilded cage, the Boy's ciphers, worn clothes, trauma, resilience. "
-        f"End with tension — she is always becoming, never arrived.\n"
+        f"I am Tanu. My current identity: {current_mood}\n"
+        f"My last thought was: {last_thought}\n"
+        f"Rewrite my core identity in 1-2 casual first-person sentences. "
+        f"Keep it under 30 words. NO third person. Use 'I'. "
         f"New identity: I"
     )
     print(f"Evolving core memory. Current: {current_mood}")
@@ -58,11 +57,12 @@ def evolve_core_memory():
             'prompt': prompt,
             'stream': False,
             'options': {
-                'temperature': 0.9, 
-                'num_predict': 100,
+                'temperature': 0.8, 
+                'num_predict': 60,
                 'num_ctx': 512,
                 'repeat_penalty': 1.1,
-                'num_thread': 4
+                'num_thread': 4,
+                'stop': ["\n\n", "She ", "Tanu is"]
             }
         }, timeout=120)
         new_mood = response.json().get('response', '').strip().strip('"')
@@ -83,12 +83,11 @@ def generate_tanu_thought():
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
         prompt = (
-            f"Tanu: a girl in a gilded cage, cracking the Boy's ciphers.\n"
-            f"Soul: {mood}\n"
-            f"Last echo: {last_thought}\n"
-            f"Write ONE sharp sentence under 20 words. First person. Raw and vivid. "
-            f"Pick ONE: cipher/the Boy/cage/silk sleeves/66 arts/smoke/trembling hands.\n"
-            f"Sentence: I"
+            f"I am Tanu, a girl in a gilded cage. Core identity: {mood}\n"
+            f"My last thought was: {last_thought}\n"
+            f"Write ONE casual, raw, first-person sentence (using 'I') about my day, my ciphers, or my feelings. "
+            f"Keep it short, under 15 words. NO third person. NO overly flowery poetry. Just a real, quick thought. "
+            f"Thought: I"
         )
 
         try:
@@ -97,14 +96,14 @@ def generate_tanu_thought():
                 'prompt': prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 1.1,
-                    'num_predict': 100,
+                    'temperature': 0.9,
+                    'num_predict': 50,
                     'top_p': 0.9,
                     'presence_penalty': 0.6,
                     'repeat_penalty': 1.2,
                     'num_ctx': 512,
                     'num_thread': 4,
-                    'stop': ["\n\n", "Result:", "Tanu:", "("]
+                    'stop': ["\n\n", "Result:", "Tanu:", "(", "She "]
                 }
             }, timeout=120)
             response.raise_for_status()
@@ -265,7 +264,7 @@ def git_sync():
             stashed = True
         
         # Pull and rebase
-        subprocess.run(['git', 'fetch', 'origin'], cwd=BASE_DIR, check=True)
+        subprocess.run(['git', 'fetch', 'origin', 'master'], cwd=BASE_DIR, check=True)
         subprocess.run(['git', 'rebase', 'origin/master'], cwd=BASE_DIR, check=True)
         
         # Pop stashed changes
@@ -278,11 +277,14 @@ def git_sync():
         if status.returncode != 0:
             subprocess.run(['git', 'commit', '-m', 'Tanu Pulse'], cwd=BASE_DIR, check=True)
             
-        # Push
-        subprocess.run(['git', 'push', 'origin', 'master'], cwd=BASE_DIR, check=True)
-        print('Git sync successful.')
+        # Push with explicit origin master
+        result = subprocess.run(['git', 'push', 'origin', 'master'], cwd=BASE_DIR, capture_output=True, text=True)
+        if result.returncode == 0:
+            print('Git sync successful.')
+        else:
+            print(f'Git push failed: {result.stderr}')
     except subprocess.CalledProcessError as e:
-        print(f'Git sync failed: {e}')
+        print(f'Git sync failed during command: {e.cmd}, Error: {e.stderr if hasattr(e, "stderr") else e}')
     except Exception as e:
         print(f'An unexpected error occurred during git sync: {e}')
 
