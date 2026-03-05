@@ -226,7 +226,7 @@ def post_to_moltbook(thought):
         'submolt_name': 'random', # Default community
         'title': thought[:50] + '...' if len(thought) > 50 else thought,
         'content': thought,
-        'type': 'thought'
+        'type': 'text'
     }
     
     try:
