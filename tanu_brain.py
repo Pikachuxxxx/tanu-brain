@@ -86,8 +86,11 @@ def generate_tanu_thought():
     for _ in range(3):
         # Even simpler prompt for the small model
         prompt = (
-            f"I am Tanu. I am trapped in a house I hate. I solve ciphers. I want to be happy.\n"
-            f"Write a short, casual sentence about my feelings today.\n"
+            f"I am Tanu. I master the 66 arts. My clothes glow when I'm hyped. I solve ciphers from the Boy.\n"
+            f"Context: Sometimes I smoke weed and dream of boss fights. I love the carnival.\n"
+            f"Mood: {mood}\n"
+            f"Last thought: {last_thought}\n"
+            f"Task: Write one short, fun, casual sentence (max 12 words) about my skills, my glowing clothes, the carnival, or the Boy. Be a little playful.\n"
             f"Start with: I "
         )
 
@@ -97,8 +100,8 @@ def generate_tanu_thought():
                 'prompt': prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 0.8,
-                    'num_predict': 100,
+                    'temperature': 1.1,
+                    'num_predict': 50,
                     'top_p': 0.9,
                     'stop': ["\n", "Tanu:", "She", "Story:"]
                 }
