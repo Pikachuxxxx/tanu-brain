@@ -105,11 +105,19 @@ def generate_tanu_thought():
             }, timeout=120)
             response.raise_for_status()
             text = response.json().get('response', '').strip().strip('"')
-            # Clean up the output in case it repeats "I"
+            # Clean up the output: remove Tanu: prefixes and redundant I's
+            text = text.replace("Tanu:", "").strip()
             if text.lower().startswith("i "):
                 thought = text
             else:
                 thought = f"I {text}".strip()
+            
+            # Ensure it's truly first person and doesn't repeat "I I"
+            if thought.lower().startswith("i i "):
+                thought = thought[2:].strip()
+            
+            # Final sanity check: if it says "I Tanu is" or similar, fix it
+            thought = thought.replace("I I ", "I ")
             
             if len(thought) > 5 and len(thought.split()) < 15 and thought != last_thought:
                 return thought
