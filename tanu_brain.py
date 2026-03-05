@@ -82,11 +82,13 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
+        # Extremely strict prompt for Qwen 0.5b to stop it from rambling
         prompt = (
-            f"I am Tanu, a girl in a gilded cage. Core identity: {mood}\n"
-            f"My last thought was: {last_thought}\n"
-            f"Write ONE casual, raw, first-person sentence (using 'I') about my day, my ciphers, or my feelings. "
-            f"Keep it short, under 15 words. NO third person. NO overly flowery poetry. Just a real, quick thought. "
+            f"Context: I am Tanu. I live in a house I hate. I solve ciphers. I want to be happy.\n"
+            f"Mood: {mood}\n"
+            f"Last thought: {last_thought}\n"
+            f"Task: Write ONE very short casual sentence (max 10 words) starting with 'I'. "
+            f"No poetry. No metaphors. Just a direct thought like a text message.\n"
             f"Thought: I"
         )
 
@@ -96,19 +98,16 @@ def generate_tanu_thought():
                 'prompt': prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 0.9,
-                    'num_predict': 50,
+                    'temperature': 0.8,
+                    'num_predict': 20, # Very short to force brevity
                     'top_p': 0.9,
-                    'presence_penalty': 0.6,
-                    'repeat_penalty': 1.2,
-                    'num_ctx': 512,
-                    'num_thread': 4,
-                    'stop': ["\n\n", "Result:", "Tanu:", "(", "She "]
+                    'stop': ["\n", ".", "Tanu:", "She", "I am a", "My "]
                 }
             }, timeout=120)
             response.raise_for_status()
-            thought = response.json().get('response', '').strip().strip('"')
-            if thought and thought != last_thought and len(thought) > 10:
+            text = response.json().get('response', '').strip().strip('"')
+            thought = f"I {text}".strip()
+            if len(thought) > 5 and thought != last_thought:
                 return thought
         except Exception as e:
             print(f"Generation error: {e}")
