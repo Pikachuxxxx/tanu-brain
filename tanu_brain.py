@@ -104,15 +104,29 @@ def generate_tanu_thought():
             response.raise_for_status()
             text = response.json().get('response', '').strip().strip('"').strip()
             
-            # If it doesn't start with I, prepend it
-            if not text.lower().startswith("i "):
-                thought = f"I {text}"
-            else:
-                thought = text
+            # 1. Remove common prefixes the model might hallucinate
+            for prefix in ["Tanu:", "Tanu", "Thought:", "Sentence:"]:
+                if text.startswith(prefix):
+                    text = text[len(prefix):].strip()
             
-            # Very basic cleanup
-            thought = thought.replace("I I ", "I ").strip()
-            # Capitalize
+            # 2. Handle the "I" start. Prepend if missing, but avoid doubles.
+            # Convert to lower for check, but preserve original for the rest
+            clean_text = text.lstrip(',').lstrip().strip()
+            if not clean_text.lower().startswith("i "):
+                # If it starts with 'I' but no space (like "I'm" or "I,"), don't prepend "I "
+                if not clean_text.lower().startswith("i"):
+                    thought = f"I {clean_text}"
+                else:
+                    thought = clean_text
+            else:
+                thought = clean_text
+            
+            # 3. Final aggressive cleanup for "I I" or "I I,"
+            import re
+            thought = re.sub(r'^i\s+i\s+', 'I ', thought, flags=re.IGNORECASE)
+            thought = re.sub(r'^i,\s+i\s+', 'I ', thought, flags=re.IGNORECASE)
+            
+            # Ensure it's capitalized
             if len(thought) > 1:
                 thought = thought[0].upper() + thought[1:]
 
