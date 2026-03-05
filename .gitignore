@@ -3,3 +3,7 @@ venv/
 __pycache__/
 *.log
 tanu_brain.log
+.DS_Store
+
+# Claude Code project files — explicitly tracked
+!.claude/

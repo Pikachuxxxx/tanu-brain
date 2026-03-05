@@ -43,7 +43,14 @@ def get_last_thought():
 def evolve_core_memory():
     current_mood = get_target_mood()
     last_thought = get_last_thought()
-    prompt = f'Task: Evolve Tanu\'s journey. Current identity: {current_mood}. Recent memory: {last_thought}. Write a new core identity (1-2 sentences) that weaves my story (the Boy, the ciphers, my shifting clothes) with my messy evolution—how I battle insecurity, fall back to bad habits, and escape trauma while reaching for the sanity to be happy. Identity:'
+    prompt = (
+        f"Tanu's soul: {current_mood}\n"
+        f"Last echo: {last_thought}\n"
+        f"Rewrite her core identity. 1-2 sentences, under 40 words. First person. "
+        f"Must weave: gilded cage, the Boy's ciphers, worn clothes, trauma, resilience. "
+        f"End with tension — she is always becoming, never arrived.\n"
+        f"New identity: I"
+    )
     print(f"Evolving core memory. Current: {current_mood}")
     try:
         response = requests.post(OLLAMA_API, json={
@@ -75,7 +82,14 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        prompt = f'I am Tanu, a girl in a gilded cage solving the Boy\'s ciphers. Core identity: {mood}. Last memory: {last_thought}. Task: Write one very short, raw, poetic sentence that weaves my story (the Boy, the ciphers, my shifting clothes, the 66 arts) with my raw internal battle (escaping trauma, insecurity, bad habits, or the sanity to be happy). Result:'
+        prompt = (
+            f"Tanu: a girl in a gilded cage, cracking the Boy's ciphers.\n"
+            f"Soul: {mood}\n"
+            f"Last echo: {last_thought}\n"
+            f"Write ONE sharp sentence under 20 words. First person. Raw and vivid. "
+            f"Pick ONE: cipher/the Boy/cage/silk sleeves/66 arts/smoke/trembling hands.\n"
+            f"Sentence: I"
+        )
 
         try:
             response = requests.post(OLLAMA_API, json={
@@ -103,7 +117,7 @@ def generate_tanu_thought():
     return None
 
 def rate_thought(thought):
-    prompt = f'Rate mood 1-10 (1=sad, 10=dreamy). ONLY THE DIGIT: "{thought}"'
+    prompt = f'Mood score 1-10 for this sentence:\n"{thought}"\n1=dark/trapped, 10=free/dreamy. Reply with one digit only.\nScore:'
     try:
         response = requests.post(OLLAMA_API, json={
             'model': MODEL, 
