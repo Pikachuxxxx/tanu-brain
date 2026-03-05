@@ -82,13 +82,11 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
+        # Even simpler prompt for the small model
         prompt = (
-            f"Tanu: a casual girl in a house she hates. Not a poet.\n"
-            f"Mood: {mood}\n"
-            f"Bad examples: 'I am a fragment of a soul', 'The moon whispers'.\n"
-            f"Good examples: 'I need a cigarette.', 'I finally cracked that code.', 'I hate this house.'\n"
-            f"Task: Write one very short, casual sentence starting with 'I'.\n"
-            f"Thought: I"
+            f"I am Tanu. I am trapped in a house I hate. I solve ciphers. I want to be happy.\n"
+            f"Write a short, casual sentence about my feelings today.\n"
+            f"Start with: I "
         )
 
         try:
@@ -98,31 +96,27 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 0.8,
-                    'num_predict': 40,
+                    'num_predict': 30,
                     'top_p': 0.9,
-                    'stop': ["\n", ".", "Tanu:", "She", "I am a", "My "]
+                    'stop': ["\n", "Tanu:", "She", "Story:"]
                 }
             }, timeout=120)
             response.raise_for_status()
-            text = response.json().get('response', '').strip().strip('"')
-            # Clean up the output: remove Tanu: prefixes and redundant I's
-            text = text.replace("Tanu:", "").strip()
+            text = response.json().get('response', '').strip().strip('"').strip()
             
-            # If it already starts with I, use it, otherwise prepend
-            if text.lower().startswith("i "):
-                thought = text
+            # If it doesn't start with I, prepend it
+            if not text.lower().startswith("i "):
+                thought = f"I {text}"
             else:
-                thought = f"I {text}".strip()
+                thought = text
             
-            # Remove any double "I " at start
-            while thought.lower().startswith("i i "):
-                thought = thought[2:].strip()
-            
-            # Capitalize first letter if it's "i"
-            if thought.startswith("i "):
-                thought = "I" + thought[1:]
-            
-            if len(thought) > 5 and len(thought.split()) < 20 and thought != last_thought:
+            # Very basic cleanup
+            thought = thought.replace("I I ", "I ").strip()
+            # Capitalize
+            if len(thought) > 1:
+                thought = thought[0].upper() + thought[1:]
+
+            if len(thought) > 5 and len(thought.split()) < 25 and thought != last_thought:
                 return thought
         except Exception as e:
             print(f"Generation error: {e}")
