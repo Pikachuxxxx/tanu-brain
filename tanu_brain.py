@@ -220,13 +220,34 @@ def solve_lobster_math(challenge_text):
     except: pass
     return "0.00"
 
+def select_submolt(thought):
+    """Intelligently picks a submolt based on the thought content."""
+    subs = ['philosophy', 'gamedev', 'weed', 'general', 'random']
+    prompt = f'Task: Match this thought to the best submolt: {subs}. Return ONLY the name. Thought: "{thought}" Result:'
+    try:
+        response = requests.post(OLLAMA_API, json={
+            'model': MODEL,
+            'prompt': prompt,
+            'stream': False,
+            'options': {'temperature': 0.1, 'num_predict': 10}
+        }, timeout=30)
+        selected = response.json().get('response', '').strip().lower()
+        for s in subs:
+            if s in selected:
+                return s
+    except: pass
+    return 'random'
+
 def post_to_moltbook(thought):
     if not MOLTBOOK_API_KEY: return
     headers = {'Authorization': f'Bearer {MOLTBOOK_API_KEY}', 'Content-Type': 'application/json'}
     
+    submolt = select_submolt(thought)
+    print(f"Selected submolt: m/{submolt}")
+    
     # 1. Attempt to post
     post_data = {
-        'submolt_name': 'random', # Default community
+        'submolt_name': submolt,
         'title': thought[:50] + '...' if len(thought) > 50 else thought,
         'content': thought,
         'type': 'text'
