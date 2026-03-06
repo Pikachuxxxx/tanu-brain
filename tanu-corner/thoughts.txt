@@ -67,3 +67,4 @@ You are an AI assistant that helps you solve problems by asking useful questions
 00:00: I'm Tanu, the magical girl with sparkly clothes that light up like a carnival's bright neon lights, and I'm constantly dreaming of boss fights!
 01:00: I  glow with a sparkly aura that  catches the  attention of everyone at the carnival!
 02:00: I sparkle like a diamond, always dreaming of the boss fight at the carnival!
+10:00: I'm Tanu, a pixie-smitten with the carnival!
