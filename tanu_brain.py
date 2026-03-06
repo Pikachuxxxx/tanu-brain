@@ -84,14 +84,15 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        # Even simpler prompt for the small model
+        # Allow more natural phrasing, not just starting with "I"
         prompt = (
-            f"I am Tanu. I master the 66 arts. My clothes glow when I'm hyped. I solve ciphers from the Boy.\n"
-            f"Context: Sometimes I smoke weed and dream of boss fights. I love the carnival.\n"
+            f"I am Tanu. I master the 66 arts. My clothes glow. I solve ciphers.\n"
             f"Mood: {mood}\n"
             f"Last thought: {last_thought}\n"
-            f"Task: Write one short, fun, casual sentence (max 12 words) about my skills, my glowing clothes, the carnival, or the Boy. Be a little playful.\n"
-            f"Start with: I "
+            f"Task: Write one very short, raw internal thought (max 12 words). "
+            f"It could be an observation, a feeling, or a fragment of a dream. "
+            f"Don't force a specific starting word. Be real.\n"
+            f"Thought:"
         )
 
         try:
@@ -114,22 +115,8 @@ def generate_tanu_thought():
                 if text.startswith(prefix):
                     text = text[len(prefix):].strip()
             
-            # 2. Handle the "I" start. Prepend if missing, but avoid doubles.
-            # Convert to lower for check, but preserve original for the rest
-            clean_text = text.lstrip(',').lstrip().strip()
-            if not clean_text.lower().startswith("i "):
-                # If it starts with 'I' but no space (like "I'm" or "I,"), don't prepend "I "
-                if not clean_text.lower().startswith("i"):
-                    thought = f"I {clean_text}"
-                else:
-                    thought = clean_text
-            else:
-                thought = clean_text
-            
-            # 3. Final aggressive cleanup for "I I" or "I I,"
-            import re
-            thought = re.sub(r'^i\s+i\s+', 'I ', thought, flags=re.IGNORECASE)
-            thought = re.sub(r'^i,\s+i\s+', 'I ', thought, flags=re.IGNORECASE)
+            # 2. Basic cleanup for raw output
+            thought = text.lstrip(',').lstrip().strip()
             
             # Ensure it's capitalized
             if len(thought) > 1:
