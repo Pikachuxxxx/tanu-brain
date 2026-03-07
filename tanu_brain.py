@@ -87,12 +87,8 @@ def generate_tanu_thought():
     for _ in range(3):
         # Even simpler prompt for the small model
         prompt = (
-            f"I am Tanu. I master the 66 arts. My clothes glow. I solve ciphers.\n"
-            f"Context: I am trapped in a house I hate, but I dream of the neon carnival.\n"
-            f"Mood: {mood}\n"
-            f"Last thought: {last_thought}\n"
-            f"Task: Write one short internal thought (max 12 words) showing the sharp contrast between my magic and my cage. "
-            f"Be raw. Don't be a happy pixie. Be a survivor.\n"
+            f"I am Tanu. I live in a house I hate. My clothes glow. I solve ciphers.\n"
+            f"Write a short, raw internal thought (max 15 words) about my cage and my magic.\n"
             f"Thought:"
         )
 
@@ -103,7 +99,7 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 1.1,
-                    'num_predict': 50,
+                    'num_predict': 100,
                     'top_p': 0.9,
                     'stop': ["\n", "Tanu:", "She", "Story:"]
                 }
