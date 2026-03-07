@@ -48,9 +48,10 @@ def evolve_core_memory():
     prompt = (
         f"I am Tanu. My current identity: {current_mood}\n"
         f"My last thought was: {last_thought}\n"
-        f"Rewrite my core identity in 1-2 casual first-person sentences. "
-        f"Keep it under 30 words. NO third person. Use 'I'. "
-        f"New identity: I"
+        f"Rewrite my core identity in 1-2 sentences. "
+        f"MUST weave the sharp edge of my trauma/cage with the neon glow of my magic/66 arts. "
+        f"Don't become a pure 'magical girl' - keep the raw struggle. "
+        f"New identity:"
     )
     print(f"Evolving core memory. Current: {current_mood}")
     try:
@@ -59,8 +60,8 @@ def evolve_core_memory():
             'prompt': prompt,
             'stream': False,
             'options': {
-                'temperature': 0.8, 
-                'num_predict': 60,
+                'temperature': 0.9, 
+                'num_predict': 80,
                 'num_ctx': 512,
                 'repeat_penalty': 1.1,
                 'num_thread': 4,
@@ -84,14 +85,14 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        # Allow more natural phrasing, not just starting with "I"
+        # Even simpler prompt for the small model
         prompt = (
             f"I am Tanu. I master the 66 arts. My clothes glow. I solve ciphers.\n"
+            f"Context: I am trapped in a house I hate, but I dream of the neon carnival.\n"
             f"Mood: {mood}\n"
             f"Last thought: {last_thought}\n"
-            f"Task: Write one very short, raw internal thought (max 12 words). "
-            f"It could be an observation, a feeling, or a fragment of a dream. "
-            f"Don't force a specific starting word. Be real.\n"
+            f"Task: Write one short internal thought (max 12 words) showing the sharp contrast between my magic and my cage. "
+            f"Be raw. Don't be a happy pixie. Be a survivor.\n"
             f"Thought:"
         )
 
