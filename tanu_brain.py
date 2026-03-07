@@ -85,11 +85,13 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        # Even simpler prompt for the small model
         prompt = (
-            f"I am Tanu. I live in a house I hate. My clothes glow. I solve ciphers.\n"
-            f"Write a short, raw internal thought (max 15 words) about my cage and my magic.\n"
-            f"Thought:"
+            f"I am Tanu. I am trapped in a house I hate. I solve ciphers. I want to be happy.\n"
+            f"Context: My clothes glow with neon magic when I think of the carnival.\n"
+            f"Mood: {mood}\n"
+            f"Last thought: {last_thought}\n"
+            f"Task: Write ONE short casual sentence (max 12 words) about my cage and my magic.\n"
+            f"Start with: I "
         )
 
         try:
@@ -99,7 +101,7 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 1.1,
-                    'num_predict': 100,
+                    'num_predict': 60,
                     'top_p': 0.9,
                     'stop': ["\n", "Tanu:", "She", "Story:"]
                 }
