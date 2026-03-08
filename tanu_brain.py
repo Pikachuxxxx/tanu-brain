@@ -83,15 +83,14 @@ def generate_tanu_thought():
     mood = get_target_mood()
     last_thought = get_last_thought()
     
-    # Try up to 3 times to get a unique, non-empty thought
-    for _ in range(3):
+    # Try up to 5 times for a 0.5b model to be more robust
+    for attempt in range(5):
         prompt = (
-            f"I am Tanu. I am trapped in a house I hate. I solve ciphers. I want to be happy.\n"
-            f"Context: My clothes glow with neon magic when I think of the carnival.\n"
-            f"Mood: {mood}\n"
-            f"Last thought: {last_thought}\n"
-            f"Task: Write ONE short casual sentence (max 12 words) about my cage and my magic.\n"
-            f"Start with: I "
+            f"System: You are Tanu. Roleplay in 1 sentence. Be brief and poetic.\n"
+            f"My Identity: {mood}\n"
+            f"My Last Word: {last_thought}\n"
+            f"My Task: Whisper one new thought (max 12 words) about my cage or magic.\n"
+            f"I "
         )
 
         try:
@@ -100,34 +99,38 @@ def generate_tanu_thought():
                 'prompt': prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 1.1,
-                    'num_predict': 60,
+                    'temperature': 1.3, # Higher temp for 0.5b model variety
+                    'num_predict': 50,
                     'top_p': 0.9,
-                    'stop': ["\n", "She", "Story:"] # Removed "Tanu:" from stop tokens
+                    'repeat_penalty': 1.2,
+                    'stop': ["\n", "System:", "My Task:", "Identity:"]
                 }
             }, timeout=120)
             response.raise_for_status()
             text = response.json().get('response', '').strip().strip('"').strip()
             
-            # 1. Remove common prefixes the model might hallucinate
-            for prefix in ["Tanu:", "Tanu", "Thought:", "Sentence:"]:
+            # Cleanup hallucinated prefixes
+            for prefix in ["Tanu:", "Tanu ", "Thought:", "Sentence:", "I "]:
                 if text.lower().startswith(prefix.lower()):
                     text = text[len(prefix):].strip()
             
-            # 2. Basic cleanup for raw output
-            thought = text.lstrip(',').lstrip().strip()
+            # Ensure it's a "fresh" thought by adding "I " back if it's missing
+            thought = f"I {text}" if not text.startswith("I ") else text
+            thought = thought.split('.')[0].strip() + "." # Keep it to one sentence
             
             # Ensure it's capitalized
             if len(thought) > 1:
                 thought = thought[0].upper() + thought[1:]
 
-            # Validation check
-            if len(thought) <= 5:
-                print(f"Candidate rejected: Too short ({len(thought)} chars): {thought}")
-            elif len(thought.split()) >= 25:
-                print(f"Candidate rejected: Too long ({len(thought.split())} words): {thought}")
+            # Strict validation against echoing identity or being too long
+            if len(thought) <= 10:
+                print(f"Candidate rejected (Attempt {attempt+1}): Too short: {thought}")
+            elif len(thought.split()) >= 20:
+                print(f"Candidate rejected (Attempt {attempt+1}): Too long: {thought}")
+            elif thought.lower() in mood.lower() or mood.lower() in thought.lower():
+                print(f"Candidate rejected (Attempt {attempt+1}): Echoing identity: {thought}")
             elif thought == last_thought:
-                print(f"Candidate rejected: Duplicate of last thought: {thought}")
+                print(f"Candidate rejected (Attempt {attempt+1}): Duplicate: {thought}")
             else:
                 return thought
         except Exception as e:
