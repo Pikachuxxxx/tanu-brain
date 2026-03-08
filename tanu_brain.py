@@ -103,7 +103,7 @@ def generate_tanu_thought():
                     'temperature': 1.1,
                     'num_predict': 60,
                     'top_p': 0.9,
-                    'stop': ["\n", "Tanu:", "She", "Story:"]
+                    'stop': ["\n", "She", "Story:"] # Removed "Tanu:" from stop tokens
                 }
             }, timeout=120)
             response.raise_for_status()
@@ -111,7 +111,7 @@ def generate_tanu_thought():
             
             # 1. Remove common prefixes the model might hallucinate
             for prefix in ["Tanu:", "Tanu", "Thought:", "Sentence:"]:
-                if text.startswith(prefix):
+                if text.lower().startswith(prefix.lower()):
                     text = text[len(prefix):].strip()
             
             # 2. Basic cleanup for raw output
@@ -121,7 +121,14 @@ def generate_tanu_thought():
             if len(thought) > 1:
                 thought = thought[0].upper() + thought[1:]
 
-            if len(thought) > 5 and len(thought.split()) < 25 and thought != last_thought:
+            # Validation check
+            if len(thought) <= 5:
+                print(f"Candidate rejected: Too short ({len(thought)} chars): {thought}")
+            elif len(thought.split()) >= 25:
+                print(f"Candidate rejected: Too long ({len(thought.split())} words): {thought}")
+            elif thought == last_thought:
+                print(f"Candidate rejected: Duplicate of last thought: {thought}")
+            else:
                 return thought
         except Exception as e:
             print(f"Generation error: {e}")
@@ -171,6 +178,8 @@ def update_mood_graph(mood_score):
     # Only generate plot every 10 thoughts to save RPi resources
     if len(history) >= 1 and len(history) % 10 == 0:
         try:
+            import matplotlib
+            matplotlib.use('Agg') # Headless backend
             import matplotlib.pyplot as plt
             import numpy as np
             times = [datetime.strptime(x['timestamp'], '%y-%m-%d %H:%M') for x in history]
