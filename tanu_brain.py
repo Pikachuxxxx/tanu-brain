@@ -86,11 +86,10 @@ def generate_tanu_thought():
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
         prompt = (
-            f"I am Tanu. I am trapped in a house I hate. I solve ciphers. I want to be happy.\n"
-            f"Context: My clothes glow with neon magic when I think of the carnival.\n"
-            f"Mood: {mood}\n"
+            f"I am Tanu. Core identity: {mood}\n"
+            f"Context: I solve ciphers in a house I hate, but my clothes glow with neon magic.\n"
             f"Last thought: {last_thought}\n"
-            f"Task: Write ONE casual, abstract sentence about my existence. Avoid self-introductions. Be a free thinker.\n"
+            f"Task: Write ONE unique, casual observation about my existence that reflects a fragment of my core identity. Be abstract and free-thinking. Do NOT repeat the core identity word-for-word. Avoid 'I am' or 'I, Tanu'.\n"
             f"Thought:"
         )
 
@@ -100,17 +99,17 @@ def generate_tanu_thought():
                 'prompt': prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 1.1,
+                    'temperature': 1.25,
                     'num_predict': 60,
-                    'top_p': 0.9,
-                    'stop': ["\n", "She", "Story:", "I, Tanu"] 
+                    'top_p': 0.95,
+                    'stop': ["\n", "She", "Story:", "I, Tanu", "I am"] 
                 }
             }, timeout=120)
             response.raise_for_status()
             text = response.json().get('response', '').strip().strip('"').strip()
             
             # 1. Remove common prefixes the model might hallucinate
-            for prefix in ["Tanu:", "Tanu", "Thought:", "Sentence:"]:
+            for prefix in ["Tanu:", "Tanu", "Thought:", "Sentence:", "Free thought:", "Observation:"]:
                 if text.lower().startswith(prefix.lower()):
                     text = text[len(prefix):].strip()
             
