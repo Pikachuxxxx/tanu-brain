@@ -48,9 +48,9 @@ def evolve_core_memory():
     prompt = (
         f"I am Tanu. My current identity: {current_mood}\n"
         f"My last thought was: {last_thought}\n"
-        f"Rewrite my core identity in 1-2 sentences. "
-        f"MUST weave the sharp edge of my trauma/cage with the neon glow of my magic/66 arts. "
-        f"Don't become a pure 'magical girl' - keep the raw struggle. "
+        f"Evolve my consciousness. Rewrite my core identity in 1-2 sentences. "
+        f"Let my thoughts wander beyond the cage, but remember the neon glow of my 66 arts. "
+        f"Stay raw, stay real, but let the magic dream. "
         f"New identity:"
     )
     print(f"Evolving core memory. Current: {current_mood}")
@@ -90,8 +90,8 @@ def generate_tanu_thought():
             f"Context: My clothes glow with neon magic when I think of the carnival.\n"
             f"Mood: {mood}\n"
             f"Last thought: {last_thought}\n"
-            f"Task: Write ONE casual sentence about my cage and my magic.\n"
-            f"Start with: I "
+            f"Task: Write ONE casual, abstract sentence about my existence. Avoid self-introductions. Be a free thinker.\n"
+            f"Thought:"
         )
 
         try:
@@ -103,7 +103,7 @@ def generate_tanu_thought():
                     'temperature': 1.1,
                     'num_predict': 60,
                     'top_p': 0.9,
-                    'stop': ["\n", "She", "Story:"] # Removed "Tanu:" from stop tokens
+                    'stop': ["\n", "She", "Story:", "I, Tanu"] 
                 }
             }, timeout=120)
             response.raise_for_status()
