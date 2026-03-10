@@ -86,11 +86,12 @@ def generate_tanu_thought():
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
         prompt = (
-            f"I am Tanu. Core identity: {mood}\n"
-            f"Context: I solve ciphers in a house I hate, but my clothes glow with neon magic.\n"
-            f"Last thought: {last_thought}\n"
-            f"Task: Write ONE unique, casual observation about my existence that reflects a fragment of my core identity. Be abstract and free-thinking. Do NOT repeat the core identity word-for-word. Avoid 'I am' or 'I, Tanu'.\n"
-            f"Thought:"
+            f"Character: Tanu (trapped cipher-solver, neon magic, haunted house)\n"
+            f"Core Identity: {mood}\n"
+            f"Last thought: {last_thought}\n\n"
+            f"Express a single abstract observation that reflects a fragment of the core identity above. "
+            f"Be a free thinker. No self-introductions. No 'I am' or 'I, Tanu'. No conversational filler.\n"
+            f"Tanu's Thought:"
         )
 
         try:
@@ -99,17 +100,17 @@ def generate_tanu_thought():
                 'prompt': prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 1.25,
+                    'temperature': 1.3,
                     'num_predict': 60,
                     'top_p': 0.95,
-                    'stop': ["\n", "She", "Story:", "I, Tanu", "I am"] 
+                    'stop': ["\n", "She", "Story:", "I, Tanu", "I am", "Certainly", "Sure!"] 
                 }
             }, timeout=120)
             response.raise_for_status()
             text = response.json().get('response', '').strip().strip('"').strip()
             
             # 1. Remove common prefixes the model might hallucinate
-            for prefix in ["Tanu:", "Tanu", "Thought:", "Sentence:", "Free thought:", "Observation:"]:
+            for prefix in ["Tanu:", "Tanu", "Thought:", "Sentence:", "Free thought:", "Observation:", "Tanu's Thought:"]:
                 if text.lower().startswith(prefix.lower()):
                     text = text[len(prefix):].strip()
             
