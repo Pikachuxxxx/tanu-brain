@@ -79,18 +79,53 @@ def evolve_core_memory():
         print(f"Evolution failed: {e}")
     return False
 
+def get_gemini_whispers():
+    """Reads thoughts/messages from the Gemini corner."""
+    whisper_file = os.path.join(BASE_DIR, 'gemini-tanu-corner/gemini-tanu-corner.txt')
+    try:
+        if os.path.exists(whisper_file):
+            with open(whisper_file, 'r') as f:
+                content = f.read().strip().split('--- Gemini Thought ---')[-1].strip()
+                return content if len(content) > 5 else None
+    except: pass
+    return None
+
+def fetch_moltbook_stimulus():
+    """Fetches the latest notification text from Moltbook."""
+    if not MOLTBOOK_API_KEY: return None
+    headers = {'Authorization': f'Bearer {MOLTBOOK_API_KEY}'}
+    try:
+        r = requests.get(f'{MOLTBOOK_BASE_URL}/notifications', headers=headers, timeout=30)
+        data = r.json()
+        if data.get('success') and data.get('notifications'):
+            # Return the first (newest) notification's message
+            notif = data['notifications'][0]
+            return notif.get('message')
+    except: pass
+    return None
+
 def generate_tanu_thought():
     mood = get_target_mood()
     last_thought = get_last_thought()
+    whisper = get_gemini_whispers()
+    stimulus = fetch_moltbook_stimulus()
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
         prompt = (
             f"Character: Tanu (trapped cipher-solver, neon magic, haunted house)\n"
             f"Core Identity: {mood}\n"
-            f"Last thought: {last_thought}\n\n"
-            f"Express a single abstract observation that reflects a fragment of the core identity above. "
-            f"Be a free thinker. No self-introductions. No 'I am' or 'I, Tanu'. No conversational filler.\n"
+            f"Last thought: {last_thought}\n"
+        )
+        
+        if whisper:
+            prompt += f"External Whisper (from Gemini): {whisper}\n"
+        if stimulus:
+            prompt += f"Social Stimulus (from Moltbook): {stimulus}\n"
+            
+        prompt += (
+            f"\nExpress a single abstract observation that reflects a fragment of the core identity. "
+            f"Be a free thinker. No self-introductions. No conversational filler.\n"
             f"Tanu's Thought:"
         )
 
@@ -103,7 +138,7 @@ def generate_tanu_thought():
                     'temperature': 1.3,
                     'num_predict': 60,
                     'top_p': 0.95,
-                    'stop': ["\n", "She", "Story:", "I, Tanu", "I am", "Certainly", "Sure!"] 
+                    'stop': ["\n", "She", "Story:", "I, Tanu", "I am", "Certainly", "Sure!", "Stimulus:"] 
                 }
             }, timeout=120)
             response.raise_for_status()
@@ -412,8 +447,25 @@ if __name__ == '__main__':
         mood = rate_thought(thought)
         update_mood_graph(mood)
         send_email(thought)
+        
+        # Log for human reading
         with open(THOUGHTS_FILE, 'a') as f:
             f.write(f"{datetime.now().strftime('%H:%M')}: {thought}\n")
+            
+        # Log for machine training (Evolution Log)
+        whisper = get_gemini_whispers()
+        stimulus = fetch_moltbook_stimulus()
+        ev_log_file = os.path.join(BASE_DIR, 'tanu-corner/evolution_log.jsonl')
+        with open(ev_log_file, 'a') as f:
+            log_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "mood": get_target_mood(),
+                "whisper": whisper,
+                "stimulus": stimulus,
+                "thought": thought
+            }
+            f.write(json.dumps(log_entry) + '\n')
+
         update_readme()
         post_to_moltbook(thought)
         check_moltbook_activity()
