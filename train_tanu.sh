@@ -1,79 +1,69 @@
 #!/bin/bash
 
-# Tanu Brain: Unified Training & Fusing Script (macOS / Linux AMD)
+# Tanu Brain: GGUF Soul & Memory Unified Trainer
 # Author: Pikachuxxxx
-# Version: 1.4.0 (Fused Soul & Live Memory)
+# Version: 3.5.0
 
 set -e
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$BASE_DIR/venv"
-HF_BASE_MODEL="Qwen/Qwen2.5-0.5B"
-CORE_ADAPTER_DIR="tanu-core-adapter"
-FUSED_MODEL_DIR="tanu-fused-core"
-MEMORY_ADAPTER="tanu-memory.bin"
-BASE_DATA="tanu_base_data.jsonl"
-TRAIN_DATA="tanu_train_data.jsonl"
+HF_BASE="Qwen/Qwen2.5-0.5B"
+CORE_ADAPTER="tanu-core-adapter"
+CORE_GGUF="tanu-core.gguf"
+MEM_ADAPTER="tanu-memory.bin"
 
-echo "🧠 Starting Tanu Brain Fusing Trainer..."
+[ -d "$VENV_DIR" ] && source "$VENV_DIR/bin/activate"
 
-# 1. Environment Check
-if [ -d "$VENV_DIR" ]; then
-    source "$VENV_DIR/bin/activate"
-fi
-
-# 2. Dependency Check
 OS_TYPE=$(uname)
-if [ "$OS_TYPE" == "Darwin" ]; then
-    if ! pip show mlx-lm > /dev/null 2>&1; then pip install mlx-lm; fi
-elif [ "$OS_TYPE" == "Linux" ]; then
-    if [ ! -d "LLaMA-Factory" ]; then
-        git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
-        cd LLaMA-Factory && pip install -e .[metrics,qwen] && cd ..
-    fi
-fi
 
-# 3. BUILD CORE PERSONALITY (The Fused Soul)
+# 1. CORE SOUL (GGUF Personality)
 if [[ "$*" == *"--personality"* ]]; then
-    echo "--- [1/2] BUILDING CORE PERSONALITY (The Fused Soul) ---"
-    python hello_world_tanu.py --build-tanu-personality
+    echo "--- Building Core Soul ---"
+    python hello_world_tanu.py --build-personality
     
+    mkdir -p .tmp_data
     if [ "$OS_TYPE" == "Darwin" ]; then
-        echo "   [TRAIN] Building Soul Adapter..."
-        mlx_lm.lora --model $HF_BASE_MODEL --train --data $BASE_DATA --iters 200 --adapter-path $CORE_ADAPTER_DIR
-        echo "   [FUSE] Fusing Soul into Base Model..."
-        mlx_lm.fuse --model $HF_BASE_MODEL --adapter-path $CORE_ADAPTER_DIR --save-path $FUSED_MODEL_DIR
-    elif [ "$OS_TYPE" == "Linux" ]; then
-        echo "   [TRAIN & FUSE] Building & Exporting Fused Soul..."
-        # LLaMA-Factory combined command to train and export fused model
-        python LLaMA-Factory/src/train.py --stage sft --do_train --model_name_or_path $HF_BASE_MODEL --dataset tanu_base_data --finetuning_type lora --output_dir $CORE_ADAPTER_DIR --overwrite_output_dir --fp16 True --num_train_epochs 3.0
-        python LLaMA-Factory/src/train.py --stage sft --model_name_or_path $HF_BASE_MODEL --adapter_name_or_path $CORE_ADAPTER_DIR --template qwen --finetuning_type lora --export_dir $FUSED_MODEL_DIR --export_size 2 --export_legacy_format False
+        python hello_world_tanu.py --convert tanu_base_data.jsonl .tmp_data/train.jsonl mlx
+        # Need at least 4 examples for validation to satisfy default MLX-LM batch size
+        tail -n 8 .tmp_data/train.jsonl > .tmp_data/valid.jsonl 
+        echo "   [TRAIN] Building Soul Adapter (MLX)..."
+        mlx_lm.lora --model $HF_BASE --train --data .tmp_data --iters 1000 --adapter-path $CORE_ADAPTER
+        echo "   [FUSE] Fusing Soul into GGUF directory..."
+        mlx_lm.fuse --model $HF_BASE --adapter-path $CORE_ADAPTER --save-path $CORE_GGUF
+    else
+        python hello_world_tanu.py --convert tanu_base_data.jsonl .tmp_data/train.json hf
+        echo "   [TRAIN] Building Soul Adapter (AMD/Linux)..."
+        python LLaMA-Factory/src/train.py --stage sft --do_train --model_name_or_path $HF_BASE --dataset_dir .tmp_data --dataset train --finetuning_type lora --output_dir $CORE_ADAPTER --overwrite_output_dir --fp16 True --num_train_epochs 3.0
     fi
     
-    python hello_world_tanu.py --install tanu-base
-    echo "✅ tanu-base (Fused Soul) is now live in Ollama."
+    rm -rf .tmp_data
+    python hello_world_tanu.py --update-model-file
+    python hello_world_tanu.py --install
+    echo "Core GGUF soul ($CORE_GGUF) ready."
 fi
 
-# 4. UPDATE MEMORY (The Live Adapter)
+# 2. EXPERIENCE (Memory Layer)
 if [[ "$*" == *"--memory"* ]]; then
-    echo "--- [2/2] BUILDING EXPERIENCE (Memory Adapter) ---"
-    if [ ! -f "$TRAIN_DATA" ]; then
-        echo "❌ No live thoughts detected in $TRAIN_DATA."
-        exit 1
-    fi
-    python hello_world_tanu.py --update-tanu-memory
+    echo "--- Updating Memory ---"
+    if [ ! -f "$CORE_GGUF" ] && [ ! -d "$CORE_GGUF" ]; then echo "Error: Build soul first (--personality)"; exit 1; fi
     
+    mkdir -p .tmp_mem_data
     if [ "$OS_TYPE" == "Darwin" ]; then
-        # We train on top of the FUSED model
-        echo "   [TRAIN] Building Memory Adapter on top of Fused Soul..."
-        mlx_lm.lora --model $FUSED_MODEL_DIR --train --data $TRAIN_DATA --iters 200 --adapter-path $MEMORY_ADAPTER
-    elif [ "$OS_TYPE" == "Linux" ]; then
-        echo "   [TRAIN] Building Memory Adapter..."
-        python LLaMA-Factory/src/train.py --stage sft --do_train --model_name_or_path $FUSED_MODEL_DIR --dataset tanu_train_data --finetuning_type lora --output_dir $MEMORY_ADAPTER --overwrite_output_dir --fp16 True --num_train_epochs 3.0
+        python hello_world_tanu.py --convert tanu_train_data.jsonl .tmp_mem_data/train.jsonl mlx
+        tail -n 8 .tmp_mem_data/train.jsonl > .tmp_mem_data/valid.jsonl
+        echo "   [TRAIN] Building Memory Adapter on top of $CORE_GGUF..."
+        mlx_lm.lora --model $CORE_GGUF --train --data .tmp_mem_data --iters 1000 --adapter-path $MEM_ADAPTER
+    else
+        python hello_world_tanu.py --convert tanu_train_data.jsonl .tmp_mem_data/train.json hf
+        echo "   [TRAIN] Building Memory Adapter on top of $CORE_GGUF (Linux/AMD)..."
+        python LLaMA-Factory/src/train.py --stage sft --do_train --model_name_or_path $CORE_GGUF --dataset_dir .tmp_mem_data --dataset train --finetuning_type lora --output_dir $MEM_ADAPTER --overwrite_output_dir --fp16 True --num_train_epochs 3.0
     fi
     
-    python hello_world_tanu.py --install tanu
-    echo "✅ tanu (Evolved Brain) is now live in Ollama."
+    rm -rf .tmp_mem_data
+    python hello_world_tanu.py --update-model-file
+    python hello_world_tanu.py --install
+    echo "Memory adapter ($MEM_ADAPTER) updated."
 fi
 
 if [ $# -eq 0 ]; then

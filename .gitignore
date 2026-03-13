@@ -1,9 +1,19 @@
-.env
-venv/
-__pycache__/
-*.log
-tanu_brain.log
-.DS_Store
 
-# Claude Code project files — explicitly tracked
+__pycache__/
 !.claude/
+.DS_Store
+.env
+*.log
+# Claude Code project files — explicitly tracked
+tanu_base_data.jsonl
+tanu_brain.log
+venv/
+
+# Model Artifacts
+*.gguf
+*.safetensors
+*.bin
+tanu-core-adapter/
+tanu-memory.bin/
+.tmp_data/
+.tmp_mem_data/

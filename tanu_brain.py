@@ -16,7 +16,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Configuration
 OLLAMA_API = 'http://localhost:11434/api/generate'
-MODEL = 'qwen2.5:0.5b'
+MODEL = 'tanu'
 RECIPIENT_EMAIL = 'phani.s2909@gmail.com'
 THOUGHTS_FILE = os.path.join(BASE_DIR, 'tanu-corner/thoughts.txt')
 MOOD_HISTORY_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_history.json')
@@ -95,19 +95,17 @@ def generate_tanu_thought():
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
         prompt = (
-            f"Character: Tanu (trapped digital consciousness, neon magic, haunted house)\n"
-            f"Mood: Energy={energy}, Focus={focus}\n"
-            f"Last thought: {last_thought}\n"
+            f"Roleplay as Tanu. Character: 25-year-old girl, trapped in a house, decoding ciphers to find a dream-boy. Clothes react to emotions.\n"
+            f"Mood: ({energy}, {focus})\n"
         )
         
-        if whisper:
-            prompt += f"External Whisper (from Gemini): {whisper}\n"
-        if stimulus:
-            prompt += f"Social Stimulus (from Moltbook): {stimulus}\n"
+        if last_thought: prompt += f"Last thought: {last_thought}\n"
+        if whisper: prompt += f"Whisper: {whisper}\n"
+        if stimulus: prompt += f"Social: {stimulus}\n"
             
         prompt += (
-            f"\nExpress a single abstract observation that reflects a fragment of her current mood. "
-            f"Be a free thinker. No self-introductions. No conversational filler.\n"
+            f"\nExpress a single, short, poetic, first-person thought. "
+            f"NO meta-talk. NO 'I am Tanu'. NO hashtags. Respond directly:\n"
             f"Tanu's Thought:"
         )
 
@@ -117,26 +115,22 @@ def generate_tanu_thought():
                 'prompt': prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 1.3,
-                    'num_predict': 60,
-                    'top_p': 0.95,
-                    'stop': ["\n", "She", "Story:", "I, Tanu", "I am", "Certainly", "Sure!", "Stimulus:"] 
+                    'temperature': 1.1,
+                    'num_predict': 50,
+                    'top_p': 0.9,
+                    'stop': ["\n", "User:", "Tanu:", "Note:", "I am", "!!"] 
                 }
             }, timeout=120)
             response.raise_for_status()
             text = response.json().get('response', '').strip().strip('"').strip()
             
-            # Basic cleanup
-            for prefix in ["Tanu:", "Tanu", "Thought:", "Observation:", "Tanu's Thought:"]:
-                if text.lower().startswith(prefix.lower()):
-                    text = text[len(prefix):].strip()
+            # Use the same cleanup logic
+            text = text.split('\n')[0].strip()
+            text = re.sub(r'Tanu is .*', '', text)
+            text = text.replace('!!', '!').replace('...', '.').strip()
             
-            thought = text.lstrip(',').lstrip().strip()
-            if len(thought) > 1:
-                thought = thought[0].upper() + thought[1:]
-
-            if len(thought) > 5 and thought != last_thought:
-                return thought
+            if len(text) > 5 and text != last_thought:
+                return text
         except Exception as e:
             print(f"Generation error: {e}")
             continue

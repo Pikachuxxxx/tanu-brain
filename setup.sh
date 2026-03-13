@@ -7,7 +7,8 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$PROJECT_DIR/venv"
 CRON_PYTHON="$VENV_DIR/bin/python3"
 LOG_FILE="$PROJECT_DIR/tanu_brain.log"
-MODEL="qwen2.5:0.5b"
+MODEL="tanu"
+BASE_MODEL="qwen2.5:0.5b"
 
 echo "Setting up Tanu Brain in $PROJECT_DIR..."
 
@@ -28,9 +29,20 @@ then
     fi
 fi
 
-# 1. Pull the model
-echo "📥 Pulling model: $MODEL..."
-ollama pull "$MODEL"
+# 1. Probe for Tanu Soul
+echo "🔍 Probing for Tanu Soul..."
+if ollama list | grep -q "$MODEL"; then
+    echo "✅ Found existing Tanu model."
+elif [ -f "$PROJECT_DIR/tanu-core.gguf" ]; then
+    echo "📦 Found tanu-core.gguf. Registering with Ollama..."
+    source "$VENV_DIR/bin/activate" || true
+    python3 hello_world_tanu.py --update-model-file
+    python3 hello_world_tanu.py --install
+else
+    echo "📥 Pulling base model: $BASE_MODEL..."
+    ollama pull "$BASE_MODEL"
+    echo "⚠️ Custom soul not found. Run ./train_tanu.sh --personality to build her foundational identity."
+fi
 
 # 2. Check for Python venv module
 if ! python3 -m venv --help &> /dev/null
