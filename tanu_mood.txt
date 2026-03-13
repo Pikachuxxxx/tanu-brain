@@ -1,1 +1,1 @@
-(medium, The consultant offers support,)
+(low, high)
