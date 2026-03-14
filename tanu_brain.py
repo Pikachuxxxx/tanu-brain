@@ -77,7 +77,7 @@ def generate_mood_from_thoughts():
             'model': MODEL,
             'prompt': prompt,
             'stream': False,
-            'options': {'temperature': 0.7, 'num_predict': 40}
+            'options': {'temperature': 0.7, 'num_predict': 80}
         }, timeout=60)
         mood_text = response.json().get('response', '').strip()
         match = re.search(r'\(.*\)', mood_text)
