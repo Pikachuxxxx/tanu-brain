@@ -77,7 +77,7 @@ def generate_mood_from_thoughts():
             'model': MODEL,
             'prompt': prompt,
             'stream': False,
-            'options': {'temperature': 0.3, 'num_predict': 150}
+            'options': {'temperature': 0.3, 'num_predict': 80}
         }, timeout=60)
         mood_text = response.json().get('response', '').strip()
         match = re.search(r'\(.*\)', mood_text)
@@ -105,7 +105,7 @@ def generate_tanu_thought():
                 'stream': False,
                 'options': {
                     'temperature': 0.4,
-                    'num_predict': 150,
+                    'num_predict': 80,
                     'top_p': 0.9,
                     'stop': ["User:", "Tanu:", "Mood:", "she ", "her ", "hers ", "Tanu ", "She ", "Tanus ", "Her "] 
                 }
