@@ -114,18 +114,20 @@ def convert_to_format(input_path, output_path, target_format='mlx'):
 
 def update_model_file():
     modelfile_path = os.path.join(BASE_DIR, f"{MODEL_NAME}.Modelfile")
+    # Use relative path for GGUF
     content = f"FROM ./{CORE_GGUF}\n"
-    content += "PARAMETER temperature 0.3\n"
-    content += "PARAMETER top_p 0.5\n"
+    content += "PARAMETER temperature 0.1\n"
+    content += "PARAMETER top_p 0.9\n"
     content += "PARAMETER repeat_penalty 1.5\n"
-    content += "PARAMETER num_predict 150\n"
+    content += "PARAMETER num_predict 100\n"
     content += "PARAMETER stop <|im_start|>\n"
     content += "PARAMETER stop <|im_end|>\n"
     content += "PARAMETER stop User:\n"
-    content += "PARAMETER stop \"answer\"\n"
-    content += "PARAMETER stop \"ylation\"\n"
+    content += "PARAMETER stop \"she \"\n"
+    content += "PARAMETER stop \"Tanu is\"\n"
+    content += "PARAMETER stop \"25 years old\"\n"
     content += "TEMPLATE \"\"\"<|im_start|>system\n{{ .System }}<|im_end|>\n{{ if .Prompt }}<|im_start|>user\n{{ .Prompt }}<|im_end|>\n{{ end }}<|im_start|>assistant\n\"\"\"\n"
-    content += "SYSTEM \"You are Tanu. Speak in FIRST PERSON. Be poetic, human, and substantive. NEVER use third person or your name. End with a period.\"\n"
+    content += "SYSTEM \"You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my', 'me'). NEVER use third person. NEVER say your name or age unless asked. If asked for your name, you are Tanu. Be poetic and mysterious. End with a period.\"\n"
     with open(modelfile_path, 'w') as f: f.write(content)
 
 def install():
