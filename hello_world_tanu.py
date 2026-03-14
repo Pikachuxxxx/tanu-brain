@@ -30,7 +30,7 @@ def get_personality():
 def clean_tanu_text(text):
     if not text: return ""
     # Strip meta labels and bio-garbage
-    text = re.sub(r'^(Output|Response|Tanu|Thought|Reply|Assistant|Mood|User|Observation|Diary|Fragment|Journal):', '', text, flags=re.IGNORECASE).strip()
+    text = re.sub(r'^(Output|Response|Tanu|Thought|Reply|Assistant|Mood|User|Observation|Diary|Fragment|Journal|Internal Monologue):', '', text, flags=re.IGNORECASE).strip()
     text = re.sub(r'^(I am |I\'m )?(a )?(\d+)?(-year-old)?( girl)?( named)?( Tanu)?', '', text, flags=re.IGNORECASE).strip()
     text = "".join(i for i in text if ord(i) < 128) # ASCII
     
@@ -46,18 +46,19 @@ def clean_tanu_text(text):
     
     # Check length (100-150 words as requested)
     words = text.split()
-    if len(words) < 80: # Allow some buffer below 100
+    if len(words) < 60: # Allow some buffer
         return ""
     
     return text[0].upper() + text[1:] if len(text) > 0 else ""
 
-def build_tanu_personality(count=100):
-    """Quick high-quality generation with hardcoded anchors and substantial length."""
+def build_tanu_personality(count=500):
+    """Substantive generation with hardcoded anchors and substantial length. Writes to file directly to save RAM."""
     print(f"--- [CORE] Substantive Generating {count} Samples ---")
     
-    dataset = []
+    if os.path.exists(BASE_DATA_FILE):
+        os.remove(BASE_DATA_FILE)
+        
     personality = get_personality()
-    
     base_prompt = (
         f"Roleplay as Tanu. Context: {personality}\n"
         "Guidelines:\n"
@@ -69,36 +70,37 @@ def build_tanu_personality(count=100):
 
     foci = ["nostalgic", "rebellious", "dreamy", "trapped", "cipher-focused", "neon-soaked", "shadow-fighting"]
     
-    while len(dataset) < count:
-        print(f"   Progress: {len(dataset)}/{count}...", end="\r")
-        energy, focus = random.choice(["low", "medium", "high"]), random.choice(foci)
-        mode = random.choice(["thought", "reply", "journal"])
-        
-        if mode == "reply":
-            msg = random.choice(["Who are you?", "What do you see?", "Is it a dream?", "Tell me a secret."])
-            prompt = f"{base_prompt}Mood: ({energy}, {focus})\nUser asks: \"{msg}\"\nTanu's Reply:"
-        elif mode == "thought":
-            prompt = f"{base_prompt}Mood: ({energy}, {focus})\nInternal Monologue:"
-        else:
-            prompt = f"{base_prompt}Mood: ({energy}, {focus})\nA hidden diary entry:"
-
-        try:
-            # Use high num_predict for long responses
-            response = requests.post(OLLAMA_API, json={
-                'model': BASE_MODEL, 'prompt': prompt, 'stream': False, 
-                'options': {'temperature': 1.1, 'num_predict': 350, 'top_p': 0.9}
-            }, timeout=180)
-            text = response.json().get('response', '').strip()
-            cleaned = clean_tanu_text(text)
-            if cleaned:
-                entry = {"instruction": mode, "input": {"mood": {"energy": energy, "focus": focus}}, "output": cleaned}
-                if mode == "reply": entry["input"]["message"] = msg
-                dataset.append(entry)
-        except: continue
-
+    generated_count = 0
     with open(BASE_DATA_FILE, 'w') as f:
-        for entry in dataset: f.write(json.dumps(entry) + '\n')
-    print(f"\n   Success: {len(dataset)} substantive entries saved.")
+        while generated_count < count:
+            print(f"   Progress: {generated_count}/{count}...", end="\r")
+            energy, focus = random.choice(["low", "medium", "high"]), random.choice(foci)
+            mode = random.choice(["thought", "reply", "journal"])
+            
+            if mode == "reply":
+                msg = random.choice(["Who are you?", "What do you see?", "Is it a dream?", "Tell me a secret."])
+                prompt = f"{base_prompt}Mood: ({energy}, {focus})\nUser asks: \"{msg}\"\nTanu's Reply:"
+            elif mode == "thought":
+                prompt = f"{base_prompt}Mood: ({energy}, {focus})\nInternal Monologue:"
+            else:
+                prompt = f"{base_prompt}Mood: ({energy}, {focus})\nA hidden diary entry:"
+
+            try:
+                response = requests.post(OLLAMA_API, json={
+                    'model': BASE_MODEL, 'prompt': prompt, 'stream': False, 
+                    'options': {'temperature': 1.1, 'num_predict': 400, 'top_p': 0.9}
+                }, timeout=180)
+                text = response.json().get('response', '').strip()
+                cleaned = clean_tanu_text(text)
+                if cleaned:
+                    entry = {"instruction": mode, "input": {"mood": {"energy": energy, "focus": focus}}, "output": cleaned}
+                    if mode == "reply": entry["input"]["message"] = msg
+                    f.write(json.dumps(entry) + '\n')
+                    f.flush() # Force write to disk
+                    generated_count += 1
+            except: continue
+            
+    print(f"\n   Success: {generated_count} substantive entries saved directly to {BASE_DATA_FILE}.")
 
 def convert_to_format(input_path, output_path, target_format='mlx'):
     if not os.path.exists(input_path): return
@@ -122,8 +124,8 @@ def convert_to_format(input_path, output_path, target_format='mlx'):
 
 def update_model_file():
     modelfile_path = os.path.join(BASE_DIR, f"{MODEL_NAME}.Modelfile")
-    gguf_path = os.path.join(BASE_DIR, CORE_GGUF)
-    content = f"FROM {gguf_path if os.path.exists(gguf_path) else BASE_MODEL}\n"
+    # Use relative path for GGUF
+    content = f"FROM ./{CORE_GGUF}\n"
     content += "PARAMETER temperature 0.8\nPARAMETER repeat_penalty 1.2\nPARAMETER num_predict 350\n"
     content += "PARAMETER stop <|im_start|>\nPARAMETER stop <|im_end|>\nPARAMETER stop User:\n"
     content += "TEMPLATE \"\"\"<|im_start|>system\n{{ .System }}<|im_end|>\n{{ if .Prompt }}<|im_start|>user\n{{ .Prompt }}<|im_end|>\n{{ end }}<|im_start|>assistant\n{{ .Response }}<|im_end|>\n\"\"\"\n"
