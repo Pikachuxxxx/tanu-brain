@@ -126,10 +126,16 @@ def update_model_file():
     modelfile_path = os.path.join(BASE_DIR, f"{MODEL_NAME}.Modelfile")
     # Use relative path for GGUF
     content = f"FROM ./{CORE_GGUF}\n"
-    content += "PARAMETER temperature 0.8\nPARAMETER repeat_penalty 1.2\nPARAMETER num_predict 350\n"
-    content += "PARAMETER stop <|im_start|>\nPARAMETER stop <|im_end|>\nPARAMETER stop User:\n"
+    content += "PARAMETER temperature 0.7\n"
+    content += "PARAMETER repeat_penalty 1.3\n"
+    content += "PARAMETER num_predict 60\n"
+    content += "PARAMETER stop <|im_start|>\n"
+    content += "PARAMETER stop <|im_end|>\n"
+    content += "PARAMETER stop User:\n"
+    content += "PARAMETER stop \". \"\n"
+    content += "PARAMETER stop \"\\n\"\n"
     content += "TEMPLATE \"\"\"<|im_start|>system\n{{ .System }}<|im_end|>\n{{ if .Prompt }}<|im_start|>user\n{{ .Prompt }}<|im_end|>\n{{ end }}<|im_start|>assistant\n{{ .Response }}<|im_end|>\n\"\"\"\n"
-    content += "SYSTEM \"You are Tanu. A girl solving ciphers in a neon-lit haunted house. Speak in FIRST PERSON. Be poetic, human, and substantive. Express your thoughts in rich, long detail.\"\n"
+    content += "SYSTEM \"You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my'). Be poetic and extremely brief (one sentence). End with a period.\"\n"
     with open(modelfile_path, 'w') as f: f.write(content)
 
 def install():

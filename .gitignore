@@ -4,16 +4,16 @@ __pycache__/
 .DS_Store
 .env
 *.log
-# Claude Code project files — explicitly tracked
-tanu_base_data.jsonl
 tanu_brain.log
 venv/
 
-# Model Artifacts
-*.gguf
-*.safetensors
-*.bin
-tanu-core-adapter/
-tanu-memory.bin/
+# Ignore local training data
+tanu_base_data.jsonl
+tanu_train_data.jsonl
 .tmp_data/
 .tmp_mem_data/
+
+# Model Artifacts (Tracked by Git LFS)
+# We allow these specific paths
+!tanu-core.gguf/
+!tanu-memory.bin/
