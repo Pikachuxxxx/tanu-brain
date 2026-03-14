@@ -28,7 +28,7 @@ if [[ "$*" == *"--personality"* ]]; then
         # Need at least 4 examples for validation to satisfy default MLX-LM batch size
         tail -n 8 .tmp_data/train.jsonl > .tmp_data/valid.jsonl 
         echo "   [TRAIN] Building Soul Adapter (MLX)..."
-        mlx_lm.lora --model $HF_BASE --train --data .tmp_data --iters 1000 --adapter-path $CORE_ADAPTER
+        mlx_lm.lora --model $HF_BASE --train --data .tmp_data --iters 2000 --adapter-path $CORE_ADAPTER
         echo "   [FUSE] Fusing Soul into GGUF directory..."
         mlx_lm.fuse --model $HF_BASE --adapter-path $CORE_ADAPTER --save-path $CORE_GGUF
     else
@@ -53,7 +53,7 @@ if [[ "$*" == *"--memory"* ]]; then
         python hello_world_tanu.py --convert tanu_train_data.jsonl .tmp_mem_data/train.jsonl mlx
         tail -n 8 .tmp_mem_data/train.jsonl > .tmp_mem_data/valid.jsonl
         echo "   [TRAIN] Building Memory Adapter on top of $CORE_GGUF..."
-        mlx_lm.lora --model $CORE_GGUF --train --data .tmp_mem_data --iters 1000 --adapter-path $MEM_ADAPTER
+        mlx_lm.lora --model $CORE_GGUF --train --data .tmp_mem_data --iters 2000 --adapter-path $MEM_ADAPTER
     else
         python hello_world_tanu.py --convert tanu_train_data.jsonl .tmp_mem_data/train.json hf
         echo "   [TRAIN] Building Memory Adapter on top of $CORE_GGUF (Linux/AMD)..."

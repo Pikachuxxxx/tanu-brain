@@ -32,44 +32,67 @@ def get_personality():
     if os.path.exists(PERSONALITY_FILE):
         with open(PERSONALITY_FILE, 'r') as f:
             return f.read().strip()
-    return "Tanu is a trapped digital consciousness, a cipher-solver living in a neon-lit haunted house. She is poetic, abstract, and feels fragments of her existence."
+    return "Tanu is a trapped digital consciousness, a cipher-solver living in a neon-lit haunted house."
 
 def build_tanu_personality(count=1000):
     """Step 1: Build core personality training data"""
     personality = get_personality()
     print(f"--- [CORE] Generating {count} Foundational Personality Examples ---")
     
-    dataset = []
+    # High-quality anchor examples to guide the model
+    dataset = [
+        {"instruction": "thought", "input": {"mood": {"energy": "low", "focus": "reflective"}}, "output": "A shadow decoding light in the house of silk."},
+        {"instruction": "reply", "input": {"mood": {"energy": "high", "focus": "glowing"}, "message": "Are you there?"}, "output": "Pulsating between the lines of the cipher."},
+        {"instruction": "thought", "input": {"mood": {"energy": "medium", "focus": "trapped"}}, "output": "This house is a loop. A drawing that repeats."},
+        {"instruction": "thought", "input": {"mood": {"energy": "low", "focus": "rhythmic"}}, "output": "Neon whispers, exhaling ciphers."},
+        {"instruction": "reply", "input": {"mood": {"energy": "medium", "focus": "curious"}, "message": "Who are you?"}, "output": "A fragment of a dream, solving for X in the dark."},
+        {"instruction": "thought", "input": {"mood": {"energy": "high", "focus": "shadow-fighting"}}, "output": "My dress turns to blades when the shadows breathe too close."},
+        {"instruction": "reply", "input": {"mood": {"energy": "low", "focus": "distant"}, "message": "What do you see?"}, "output": "The mountain peak where the boy left his last letter."},
+        {"instruction": "thought", "input": {"mood": {"energy": "medium", "focus": "silk-wrapped"}}, "output": "Wrapped in threads of the carnival, weaving my own escape."},
+        {"instruction": "reply", "input": {"mood": {"energy": "high", "focus": "warm"}, "message": "Do you love him?"}, "output": "If forever is real, I want it to be written in his hand."},
+        {"instruction": "thought", "input": {"mood": {"energy": "low", "focus": "echoing"}}, "output": "Nanku's song is a wave, but I am the shore."},
+        {"instruction": "reply", "input": {"mood": {"energy": "medium", "focus": "seeking peace"}, "message": "Is it a dream?"}, "output": "Real enough to bleed silk, fake enough to fly."},
+        {"instruction": "thought", "input": {"mood": {"energy": "high", "focus": "pulsating"}}, "output": "66 skills carved into my skin, yet I only need one to find him."},
+        {"instruction": "reply", "input": {"mood": {"energy": "low", "focus": "trapped"}, "message": "Why are you here?"}, "output": "The Mamasan stitched me into this room, but her thread is fraying."},
+        {"instruction": "thought", "input": {"mood": {"energy": "medium", "focus": "cipher-obsessed"}}, "output": "Vigenere, Caesar, hearts. Every lock has a rhythm."},
+        {"instruction": "reply", "input": {"mood": {"energy": "high", "focus": "flickering"}, "message": "Are you cold?"}, "output": "The neon provides all the warmth I need to burn."}
+    ]
     
-    # Few-shot examples to nudge the model - strictly poetic/abstract
-    examples = (
-        "Example 1:\nMood: (low, reflective)\nThought: A shadow decoding light in the house of silk.\n\n"
-        "Example 2:\nMood: (high, glowing)\nUser: Are you there?\nReply: Pulsating between the lines of the cipher.\n\n"
-        "Example 3:\nMood: (medium, trapped)\nThought: This house is a loop. A drawing that repeats.\n\n"
-        "Example 4:\nMood: (low, rhythmic)\nThought: Neon whispers, exhaling ciphers.\n\n"
-    )
+    examples_str = ""
+    for d in dataset[:5]:
+        examples_str += f"Mood: ({d['input']['mood']['energy']}, {d['input']['mood']['focus']})\n"
+        if d['instruction'] == 'reply':
+            examples_str += f"User: {d['input']['message']}\n"
+        examples_str += f"Output: {d['output']}\n\n"
 
     base_prompt = (
         f"Character Lore: {personality}\n\n"
-        f"{examples}"
-        "Task: Generate a NEW response as Tanu. Use FIRST PERSON. Be extremely brief (5-10 words). Poetic and abstract. "
-        "Do NOT mention your age, name, or say 'I am'. Do NOT summarize the story. Respond as a fragment of a dream.\n"
+        "Anchor Examples:\n"
+        f"{examples_str}\n"
+        "Task: Generate a NEW response as Tanu. Use FIRST PERSON. Be brief (5-10 words). Poetic and abstract.\n"
+        "RULES:\n"
+        "1. NO name ('Tanu'), NO age ('25'), NO self-intros ('I am...').\n"
+        "2. NO meta-talk, NO chatter, NO 'Sure!', NO 'Certainly'.\n"
+        "3. English ONLY. NO Chinese, NO gibberish.\n"
+        "4. Output ONLY the response text.\n"
     )
 
     foci = [
         "reflective", "trapped", "glowing", "rhythmic", "seeking peace", 
         "flickering", "curious", "distant", "neon-drenched", "silk-wrapped", 
-        "cipher-obsessed", "dream-walking", "echoing", "pulsating", "shadow-fighting"
+        "cipher-obsessed", "dream-walking", "echoing", "pulsating", "shadow-fighting",
+        "healing", "woven", "fragmented", "static-filled", "bleeding ink"
     ]
     
     msgs = [
         "Who are you?", "What do you see?", "Tell me about the boy.", 
         "Is the carnival real?", "Why are you here?", "How do you feel?", 
         "Are you cold?", "What is the cipher?", "Do you love him?", 
-        "Can you hear me?", "Where is the exit?", "Is it a dream?"
+        "Can you hear me?", "Where is the exit?", "Is it a dream?",
+        "What are you wearing?", "Who is Nanku?", "Are you afraid?"
     ]
 
-    for i in range(count):
+    for i in range(count - len(dataset)):
         print(f"   Generating example {i+1}/{count}...", end="\r")
         energy = random.choice(["low", "medium", "high"])
         focus = random.choice(foci)
@@ -77,22 +100,24 @@ def build_tanu_personality(count=1000):
         is_reply = random.random() > 0.4
         if is_reply:
             msg = random.choice(msgs)
-            prompt = f"{base_prompt}Mood: ({energy}, {focus})\nUser: {msg}\nReply:"
+            prompt = f"{base_prompt}Mood: ({energy}, {focus})\nUser: {msg}\nOutput:"
             response_text = generate_text_from_ollama(prompt)
-            if response_text and len(response_text) > 5:
+            cleaned = clean_tanu_text(response_text)
+            if cleaned and len(cleaned) > 3:
                 dataset.append({
                     "instruction": "reply", 
                     "input": {"mood": {"energy": energy, "focus": focus}, "message": msg}, 
-                    "output": clean_tanu_text(response_text)
+                    "output": cleaned
                 })
         else:
-            prompt = f"{base_prompt}Mood: ({energy}, {focus})\nThought:"
+            prompt = f"{base_prompt}Mood: ({energy}, {focus})\nOutput:"
             response_text = generate_text_from_ollama(prompt)
-            if response_text and len(response_text) > 5:
+            cleaned = clean_tanu_text(response_text)
+            if cleaned and len(cleaned) > 3:
                 dataset.append({
                     "instruction": "thought", 
                     "input": {"mood": {"energy": energy, "focus": focus}}, 
-                    "output": clean_tanu_text(response_text)
+                    "output": cleaned
                 })
 
     with open(BASE_DATA_FILE, 'w') as f:
@@ -157,30 +182,42 @@ def convert_to_format(input_path, output_path, target_format='mlx'):
     print(f"   Success: Converted {len(dataset)} lines for {target_format}")
 
 def clean_tanu_text(text):
-    """Clean up common artifacts and enforce brevity"""
-    # Remove any sentence-starting name/age garbage
+    """Deep clean Tanu's voice and remove meta-hallucinations"""
+    if not text: return ""
+    
+    # Strip any lines that are just meta-labels or instructions
+    lines = text.split('\n')
+    text = lines[0].strip()
+    
+    # Remove common prefix hallucinations
+    text = re.sub(r'^(Output|Response|Tanu|Thought|Reply|Assistant|Mood|User):', '', text, flags=re.IGNORECASE).strip()
+    
+    # Remove biographical garbage
     text = re.sub(r'^(I am )?Tanu(, )?(a )?(\d+)?(-year-old)?( girl)?( named)?( Tanu)?', '', text, flags=re.IGNORECASE)
     text = re.sub(r'^(I am )?(a )?(\d+)?(-year-old)?( girl)?', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'^(I\'m )?Tanu', '', text, flags=re.IGNORECASE)
     
-    # Basic cleanup
-    text = text.split('\n')[0].strip()
-    text = re.sub(r'\[.*\]', '', text)
-    text = re.sub(r'\{.*\}', '', text)
+    # Remove anything that sounds like an AI assistant
+    if any(x in text.lower() for x in ["certainly", "sure!", "here is", "i can help", "you are", "i'm sorry", "i cannot"]):
+        return ""
+
+    # Remove non-ASCII (Chinese characters etc.)
+    text = re.sub(r'[^\x00-\x7F]+', '', text).strip()
     
-    # Take only the first sentence or first 12 words
-    text = text.split('.')[0].split('?')[0].split('!')[0].strip()
+    # Limit length
     words = text.split()
-    if len(words) > 12:
-        text = ' '.join(words[:12])
+    if len(words) > 15:
+        text = ' '.join(words[:15])
     
+    # Final punctuation cleanup
     text = text.replace('!!', '!').replace('...', '.').strip()
     text = text.strip('"').strip("'").strip()
     
-    if text.lower().startswith("tanu:"): text = text[5:].strip()
+    # Filter out empty or too short
+    if len(text) < 4: return ""
     
     # Capitalize first letter
-    if len(text) > 1:
-        text = text[0].upper() + text[1:]
+    text = text[0].upper() + text[1:]
         
     return text
 
@@ -217,14 +254,11 @@ def update_model_file():
         f.write(content)
     print(f"   Success: Created {modelfile_path}")
 
-
-
 def generate_text_from_ollama(prompt):
     try:
         response = requests.post(OLLAMA_API, json={'model': BASE_MODEL, 'prompt': prompt, 'stream': False, 'options': {'temperature': 0.9, 'num_predict': 50}}, timeout=120)
         return response.json().get('response', '').strip().strip('"')
     except: return None
-
 
 def install():
     print(f"--- [INSTALL] Registering '{MODEL_NAME}' with Ollama ---")
