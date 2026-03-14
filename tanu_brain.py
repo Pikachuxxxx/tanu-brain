@@ -94,20 +94,13 @@ def generate_tanu_thought():
     
     # Try up to 3 times to get a unique, non-empty thought
     for _ in range(3):
-        prompt = (
-            f"Roleplay as Tanu. Character: 25-year-old girl, trapped in a house, decoding ciphers to find a dream-boy. Clothes react to emotions.\n"
-            f"Mood: ({energy}, {focus})\n"
-        )
-        
-        if last_thought: prompt += f"Last thought: {last_thought}\n"
+        # Direct prompt that mimics the Modelfile's style
+        prompt = f"Mood: ({energy}, {focus})\n"
+        if last_thought: prompt += f"Context: {last_thought}\n"
         if whisper: prompt += f"Whisper: {whisper}\n"
         if stimulus: prompt += f"Social: {stimulus}\n"
             
-        prompt += (
-            f"\nExpress a single, short, poetic, first-person thought. "
-            f"NO meta-talk. NO 'I am Tanu'. NO hashtags. Respond directly:\n"
-            f"Tanu's Thought:"
-        )
+        prompt += "\nExpress a single first-person poetic observation. No intro. No summary.\nOutput:"
 
         try:
             response = requests.post(OLLAMA_API, json={
@@ -115,20 +108,23 @@ def generate_tanu_thought():
                 'prompt': prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 1.1,
-                    'num_predict': 50,
+                    'temperature': 0.9,
+                    'num_predict': 60,
                     'top_p': 0.9,
-                    'stop': ["\n", "User:", "Tanu:", "Note:", "I am", "!!"] 
+                    'stop': ["\n", "User:", "Tanu:", "Mood:", "she ", "her ", "Tanu "] 
                 }
             }, timeout=120)
             response.raise_for_status()
             text = response.json().get('response', '').strip().strip('"').strip()
             
-            # Use the same cleanup logic
-            text = text.split('\n')[0].strip()
-            text = re.sub(r'Tanu is .*', '', text)
-            text = text.replace('!!', '!').replace('...', '.').strip()
+            # Clean up leakage and artifacts
+            text = re.sub(r'^(Output|Response|Thought|Tanu|Observation|Mood|User):', '', text, flags=re.IGNORECASE).strip()
+            text = "".join(i for i in text if ord(i) < 128) # ASCII only
             
+            # Strictly FIRST PERSON: Reject if she refers to herself in 3rd person
+            if re.search(r'\b(she|her|hers|Tanu)\b', text, re.IGNORECASE):
+                continue
+
             if len(text) > 5 and text != last_thought:
                 return text
         except Exception as e:
