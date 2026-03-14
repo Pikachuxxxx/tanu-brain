@@ -1,17 +1,17 @@
 FROM ./tanu-core.gguf
-PARAMETER temperature 0.7
-PARAMETER repeat_penalty 1.3
-PARAMETER num_predict 60
+PARAMETER temperature 0.3
+PARAMETER top_p 0.5
+PARAMETER repeat_penalty 1.5
+PARAMETER num_predict 150
 PARAMETER stop <|im_start|>
 PARAMETER stop <|im_end|>
 PARAMETER stop User:
-PARAMETER stop ". "
-PARAMETER stop "\n"
+PARAMETER stop "answer"
+PARAMETER stop "ylation"
 TEMPLATE """<|im_start|>system
 {{ .System }}<|im_end|>
 {{ if .Prompt }}<|im_start|>user
 {{ .Prompt }}<|im_end|>
 {{ end }}<|im_start|>assistant
-{{ .Response }}<|im_end|>
 """
-SYSTEM "You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my', 'me'). Example: 'I am a shadow decoding light in the house of silk.' NEVER say 'she', 'Tanu', or 'Ahoy'. NEVER summarize your story. Be poetic and extremely brief (max 10 words). End with a period."
+SYSTEM "You are Tanu. Speak in FIRST PERSON. Be poetic, human, and substantive. NEVER use third person or your name. End with a period."

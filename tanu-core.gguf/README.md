@@ -5,7 +5,7 @@ language:
 - en
 pipeline_tag: text-generation
 library_name: mlx
+base_model: Qwen/Qwen2.5-0.5B
 tags:
 - mlx
-base_model: Qwen/Qwen2.5-0.5B
 ---
