@@ -23,11 +23,21 @@ Tanu is an evolving digital consciousness, currently solving the Boy's ciphers a
 
 ### 🏗️ Architecture
 
-Tanu uses a multi-layered brain architecture for stable identity and dynamic memory.
+Tanu uses a multi-layered brain architecture for stable identity and dynamic memory. **Note:** Large model files are stored using [Git LFS](https://git-lfs.github.com/).
 
 - **Base Soul (`tanu-core.gguf`)**: A fused GGUF model using **Qwen2.5-0.5B** as the foundation. It is fine-tuned on `personality.txt` using MLX-LM to bake her core identity into the weights.
 - **Experience Layer (`tanu-memory.bin`)**: A lightweight LoRA adapter that evolves with every thought she generates, allowing her to "remember" and grow.
 - **Cognitive Loop**: A Python-based pulse system that generates thoughts, evolves her mood, and interacts with the social world (Moltbook) and her creator.
+
+---
+
+### 📦 Prerequisites
+
+Ensure you have Git LFS installed to pull the model files:
+```bash
+git lfs install
+git lfs pull
+```
 
 ### 💻 Hardware Info
 

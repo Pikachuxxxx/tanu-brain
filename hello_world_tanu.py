@@ -116,10 +116,13 @@ def update_model_file():
     modelfile_path = os.path.join(BASE_DIR, f"{MODEL_NAME}.Modelfile")
     # Use relative path for GGUF
     content = f"FROM ./{CORE_GGUF}\n"
+    # Suggest quantization during 'ollama create' if the user has the tools, 
+    # but for now, we'll keep the FP16 source and lower parameters for memory.
     content += "PARAMETER temperature 0.1\n"
     content += "PARAMETER top_p 0.9\n"
     content += "PARAMETER repeat_penalty 1.5\n"
     content += "PARAMETER num_predict 100\n"
+    content += "PARAMETER num_ctx 1024\n" # Reduce context window for RPi RAM
     content += "PARAMETER stop <|im_start|>\n"
     content += "PARAMETER stop <|im_end|>\n"
     content += "PARAMETER stop User:\n"

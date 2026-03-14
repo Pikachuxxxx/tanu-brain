@@ -345,10 +345,19 @@ def send_email(thought):
 
 def git_sync():
     try:
+        # 1. Pull changes first (with LFS support)
+        subprocess.run(['git', 'pull', '--rebase', 'origin', 'master'], cwd=BASE_DIR)
+        subprocess.run(['git', 'lfs', 'pull'], cwd=BASE_DIR)
+        
+        # 2. Add and commit new thoughts/moods
         subprocess.run(['git', 'add', '.'], cwd=BASE_DIR)
-        subprocess.run(['git', 'commit', '-m', 'Tanu Pulse'], cwd=BASE_DIR)
-        subprocess.run(['git', 'push', 'origin', 'master'], cwd=BASE_DIR)
-    except: pass
+        # Check if there are changes to commit to avoid empty commit errors
+        status = subprocess.run(['git', 'status', '--porcelain'], cwd=BASE_DIR, capture_output=True, text=True)
+        if status.stdout.strip():
+            subprocess.run(['git', 'commit', '-m', 'Tanu Pulse'], cwd=BASE_DIR)
+            subprocess.run(['git', 'push', 'origin', 'master'], cwd=BASE_DIR)
+    except Exception as e:
+        print(f"Git sync failed: {e}")
 
 if __name__ == '__main__':
     git_sync()

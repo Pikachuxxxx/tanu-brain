@@ -29,6 +29,24 @@ then
     fi
 fi
 
+# 0.1 Check for Git LFS
+if ! command -v git-lfs &> /dev/null
+then
+    echo "📦 Git LFS not found. Attempting to install..."
+    if [[ "$OSTYPE" == "linux-gnueabihf" || "$OSTYPE" == "linux-gnu" ]]; then
+        sudo apt-get update && sudo apt-get install -y git-lfs
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        if command -v brew &> /dev/null; then
+            brew install git-lfs
+        else
+            echo "⚠️ Please install git-lfs using Homebrew: brew install git-lfs"
+            exit 1
+        fi
+    fi
+fi
+git lfs install --local
+git lfs pull
+
 # 1. Probe for Tanu Soul
 echo "🔍 Probing for Tanu Soul..."
 if ollama list | grep -q "$MODEL"; then

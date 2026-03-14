@@ -17,6 +17,9 @@ MEM_ADAPTER="tanu-memory.bin"
 
 OS_TYPE=$(uname)
 
+# 0. Ensure LFS files are pulled
+git lfs pull
+
 # 1. CORE SOUL (GGUF Personality)
 if [[ "$*" == *"--personality"* ]]; then
     echo "--- Building Core Soul ---"
