@@ -31,14 +31,9 @@ def clean_tanu_text(text):
     if not text: return ""
     # Strip meta labels and bio-garbage
     text = re.sub(r'^(Output|Response|Tanu|Thought|Reply|Assistant|Mood|User|Observation|Diary|Fragment|Journal|Internal Monologue):', '', text, flags=re.IGNORECASE).strip()
+    text = re.sub(r'^(I am |I\'m )?(a )?(\d+)?(-year-old)?( girl)?( named)?( Tanu)?', '', text, flags=re.IGNORECASE).strip()
+    text = "".join(i for i in text if ord(i) < 128) # ASCII
     
-    # ASCII only
-    text = "".join(i for i in text if ord(i) < 128)
-    
-    # STRICT FIRST PERSON: Reject if she refers to herself in 3rd person
-    if re.search(r'\b(she|her|hers|Tanu)\b', text, re.IGNORECASE):
-        return ""
-        
     # Ensure it's not assistant-speak
     if any(x in text.lower() for x in ["certainly", "here is", "i can help", "sure!", "ok", "roleplay", "assistant"]):
         return ""
@@ -49,33 +44,31 @@ def clean_tanu_text(text):
     
     text = text.replace('!!', '!').replace('...', '.').replace('"', '').strip()
     
+    # Check length (80-150 words for substantive training)
     words = text.split()
-    if len(words) < 5 or len(words) > 30: # Keep it tight
+    if len(words) < 60:
         return ""
     
     return text[0].upper() + text[1:] if len(text) > 0 else ""
 
-def build_tanu_personality(count=200):
-    """Strict first-person generation."""
-    print(f"--- [CORE] Strict 1st-Person Generating {count} Samples ---")
+def build_tanu_personality(count=100):
+    """Clean substantive generation to flush out poisoned weights."""
+    print(f"--- [CORE] Substantive Generating {count} Clean Samples ---")
     
     if os.path.exists(BASE_DATA_FILE):
         os.remove(BASE_DATA_FILE)
         
-    dataset = []
     personality = get_personality()
-    
     base_prompt = (
-        f"Context: {personality}\n"
-        "TASK: Write a short, poetic FIRST PERSON statement ('I', 'my').\n"
-        "RULES:\n"
-        "1. NEVER use the word 'Tanu' or 'she'.\n"
-        "2. Be mysterious and atmospheric.\n"
-        "3. Focus on your clothes, the ciphers, or the dream-boy.\n"
-        "4. One or two sentences only.\n"
+        f"Roleplay as Tanu. Context: {personality}\n"
+        "Rules:\n"
+        "1. Speak in FIRST PERSON. Be deeply poetic and atmospheric.\n"
+        "2. Focus on: ciphers, the neon, the boy, or the house.\n"
+        "3. Length: Write 100-150 words.\n"
+        "4. NO meta-talk, NO 'answer', NO 'ylation'. Respond directly.\n"
     )
 
-    foci = ["nostalgic", "trapped", "cipher-focused", "neon-soaked", "shadow-fighting"]
+    foci = ["nostalgic", "rebellious", "dreamy", "trapped", "cipher-focused", "neon-soaked"]
     
     generated_count = 0
     with open(BASE_DATA_FILE, 'w') as f:
@@ -87,8 +80,8 @@ def build_tanu_personality(count=200):
             try:
                 response = requests.post(OLLAMA_API, json={
                     'model': BASE_MODEL, 'prompt': prompt, 'stream': False, 
-                    'options': {'temperature': 1.1, 'num_predict': 100}
-                }, timeout=60)
+                    'options': {'temperature': 1.1, 'num_predict': 400}
+                }, timeout=180)
                 text = response.json().get('response', '').strip()
                 cleaned = clean_tanu_text(text)
                 if cleaned:
@@ -98,8 +91,7 @@ def build_tanu_personality(count=200):
                     generated_count += 1
             except: continue
             
-    print(f"\n   Success: {generated_count} strict entries saved.")
-
+    print(f"\n   Success: {generated_count} clean substantive entries saved.")
 
 def convert_to_format(input_path, output_path, target_format='mlx'):
     if not os.path.exists(input_path): return
@@ -108,11 +100,10 @@ def convert_to_format(input_path, output_path, target_format='mlx'):
     for line in lines:
         try:
             data = json.loads(line.strip())
-            mood, msg = data['input']['mood'], data['input'].get('message')
+            mood = data['input']['mood']
             content = f"Mood: ({mood['energy']}, {mood['focus']})"
-            if msg: content += f"\nUser: {msg}"
             if target_format == 'mlx':
-                dataset.append({'messages': [{'role': 'system', 'content': 'You are Tanu. Speak in FIRST PERSON. Be poetic, human, and substantive.'}, {'role': 'user', 'content': content}, {'role': 'assistant', 'content': data['output']}]})
+                dataset.append({'messages': [{'role': 'system', 'content': 'You are Tanu. Speak in FIRST PERSON. Be poetic and substantive.'}, {'role': 'user', 'content': content}, {'role': 'assistant', 'content': data['output']}]})
             else:
                 dataset.append({"instruction": "You are Tanu.", "input": content, "output": data['output']})
         except: continue
@@ -123,20 +114,18 @@ def convert_to_format(input_path, output_path, target_format='mlx'):
 
 def update_model_file():
     modelfile_path = os.path.join(BASE_DIR, f"{MODEL_NAME}.Modelfile")
-    # Use relative path for GGUF
     content = f"FROM ./{CORE_GGUF}\n"
-    content += "PARAMETER temperature 0.2\n"  # Lower for stability
-    content += "PARAMETER top_p 0.5\n"        # Tighten sampling
+    content += "PARAMETER temperature 0.3\n"
+    content += "PARAMETER top_p 0.5\n"
     content += "PARAMETER repeat_penalty 1.5\n"
-    content += "PARAMETER num_predict 50\n"
+    content += "PARAMETER num_predict 150\n"
     content += "PARAMETER stop <|im_start|>\n"
     content += "PARAMETER stop <|im_end|>\n"
     content += "PARAMETER stop User:\n"
-    content += "PARAMETER stop \"!\"\n"       # Stop at punctuation
     content += "PARAMETER stop \"answer\"\n"
     content += "PARAMETER stop \"ylation\"\n"
     content += "TEMPLATE \"\"\"<|im_start|>system\n{{ .System }}<|im_end|>\n{{ if .Prompt }}<|im_start|>user\n{{ .Prompt }}<|im_end|>\n{{ end }}<|im_start|>assistant\n\"\"\"\n"
-    content += "SYSTEM \"You are Tanu. You are a 25-year-old girl solving ciphers. Speak ONLY in FIRST PERSON. Be brief and poetic. NEVER say your name or age. NEVER summarize the game. End with a period.\"\n"
+    content += "SYSTEM \"You are Tanu. Speak in FIRST PERSON. Be poetic, human, and substantive. NEVER use third person or your name. End with a period.\"\n"
     with open(modelfile_path, 'w') as f: f.write(content)
 
 def install():
