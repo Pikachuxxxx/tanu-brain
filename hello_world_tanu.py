@@ -31,11 +31,16 @@ def clean_tanu_text(text):
     if not text: return ""
     # Strip meta labels and bio-garbage
     text = re.sub(r'^(Output|Response|Tanu|Thought|Reply|Assistant|Mood|User|Observation|Diary|Fragment|Journal|Internal Monologue):', '', text, flags=re.IGNORECASE).strip()
-    text = re.sub(r'^(I am |I\'m )?(a )?(\d+)?(-year-old)?( girl)?( named)?( Tanu)?', '', text, flags=re.IGNORECASE).strip()
-    text = "".join(i for i in text if ord(i) < 128) # ASCII
     
+    # ASCII only
+    text = "".join(i for i in text if ord(i) < 128)
+    
+    # STRICT FIRST PERSON: Reject if she refers to herself in 3rd person
+    if re.search(r'\b(she|her|hers|Tanu)\b', text, re.IGNORECASE):
+        return ""
+        
     # Ensure it's not assistant-speak
-    if any(x in text.lower() for x in ["certainly", "here is", "i can help", "sure!", "ok", "roleplay", "assistant", "certainly!"]):
+    if any(x in text.lower() for x in ["certainly", "here is", "i can help", "sure!", "ok", "roleplay", "assistant"]):
         return ""
 
     # Cut at last punctuation
@@ -44,63 +49,57 @@ def clean_tanu_text(text):
     
     text = text.replace('!!', '!').replace('...', '.').replace('"', '').strip()
     
-    # Check length (100-150 words as requested)
     words = text.split()
-    if len(words) < 60: # Allow some buffer
+    if len(words) < 5 or len(words) > 30: # Keep it tight
         return ""
     
     return text[0].upper() + text[1:] if len(text) > 0 else ""
 
-def build_tanu_personality(count=500):
-    """Substantive generation with hardcoded anchors and substantial length. Writes to file directly to save RAM."""
-    print(f"--- [CORE] Substantive Generating {count} Samples ---")
+def build_tanu_personality(count=200):
+    """Strict first-person generation."""
+    print(f"--- [CORE] Strict 1st-Person Generating {count} Samples ---")
     
     if os.path.exists(BASE_DATA_FILE):
         os.remove(BASE_DATA_FILE)
         
+    dataset = []
     personality = get_personality()
+    
     base_prompt = (
-        f"Roleplay as Tanu. Context: {personality}\n"
-        "Guidelines:\n"
-        "1. Speak in FIRST PERSON. Be deeply poetic, atmospheric, and mysterious.\n"
-        "2. Focus on: ciphers, the humming neon, the boy in your dreams, or the house's secrets.\n"
-        "3. Length: Write a substantial paragraph (100-150 words).\n"
-        "4. NO name/age summaries. Respond directly as the character.\n"
+        f"Context: {personality}\n"
+        "TASK: Write a short, poetic FIRST PERSON statement ('I', 'my').\n"
+        "RULES:\n"
+        "1. NEVER use the word 'Tanu' or 'she'.\n"
+        "2. Be mysterious and atmospheric.\n"
+        "3. Focus on your clothes, the ciphers, or the dream-boy.\n"
+        "4. One or two sentences only.\n"
     )
 
-    foci = ["nostalgic", "rebellious", "dreamy", "trapped", "cipher-focused", "neon-soaked", "shadow-fighting"]
+    foci = ["nostalgic", "trapped", "cipher-focused", "neon-soaked", "shadow-fighting"]
     
     generated_count = 0
     with open(BASE_DATA_FILE, 'w') as f:
         while generated_count < count:
             print(f"   Progress: {generated_count}/{count}...", end="\r")
             energy, focus = random.choice(["low", "medium", "high"]), random.choice(foci)
-            mode = random.choice(["thought", "reply", "journal"])
-            
-            if mode == "reply":
-                msg = random.choice(["Who are you?", "What do you see?", "Is it a dream?", "Tell me a secret."])
-                prompt = f"{base_prompt}Mood: ({energy}, {focus})\nUser asks: \"{msg}\"\nTanu's Reply:"
-            elif mode == "thought":
-                prompt = f"{base_prompt}Mood: ({energy}, {focus})\nInternal Monologue:"
-            else:
-                prompt = f"{base_prompt}Mood: ({energy}, {focus})\nA hidden diary entry:"
+            prompt = f"{base_prompt}Mood: ({energy}, {focus})\nOutput:"
 
             try:
                 response = requests.post(OLLAMA_API, json={
                     'model': BASE_MODEL, 'prompt': prompt, 'stream': False, 
-                    'options': {'temperature': 1.1, 'num_predict': 400, 'top_p': 0.9}
-                }, timeout=180)
+                    'options': {'temperature': 1.1, 'num_predict': 100}
+                }, timeout=60)
                 text = response.json().get('response', '').strip()
                 cleaned = clean_tanu_text(text)
                 if cleaned:
-                    entry = {"instruction": mode, "input": {"mood": {"energy": energy, "focus": focus}}, "output": cleaned}
-                    if mode == "reply": entry["input"]["message"] = msg
+                    entry = {"instruction": "thought", "input": {"mood": {"energy": energy, "focus": focus}}, "output": cleaned}
                     f.write(json.dumps(entry) + '\n')
-                    f.flush() # Force write to disk
+                    f.flush()
                     generated_count += 1
             except: continue
             
-    print(f"\n   Success: {generated_count} substantive entries saved directly to {BASE_DATA_FILE}.")
+    print(f"\n   Success: {generated_count} strict entries saved.")
+
 
 def convert_to_format(input_path, output_path, target_format='mlx'):
     if not os.path.exists(input_path): return
@@ -135,7 +134,7 @@ def update_model_file():
     content += "PARAMETER stop \". \"\n"
     content += "PARAMETER stop \"\\n\"\n"
     content += "TEMPLATE \"\"\"<|im_start|>system\n{{ .System }}<|im_end|>\n{{ if .Prompt }}<|im_start|>user\n{{ .Prompt }}<|im_end|>\n{{ end }}<|im_start|>assistant\n{{ .Response }}<|im_end|>\n\"\"\"\n"
-    content += "SYSTEM \"You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my'). Be poetic and extremely brief (one sentence). End with a period.\"\n"
+    content += "SYSTEM \"You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my', 'me'). Example: 'I am a shadow decoding light in the house of silk.' NEVER say 'she', 'Tanu', or 'Ahoy'. NEVER summarize your story. Be poetic and extremely brief (max 10 words). End with a period.\"\n"
     with open(modelfile_path, 'w') as f: f.write(content)
 
 def install():
