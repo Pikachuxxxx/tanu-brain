@@ -92,40 +92,44 @@ def generate_tanu_thought():
     whisper = get_gemini_whispers()
     stimulus = fetch_moltbook_stimulus()
     
-    # Try up to 3 times to get a unique, non-empty thought
-    for _ in range(3):
-        # Direct prompt that mimics the Modelfile's style
-        prompt = f"Mood: ({energy}, {focus})\n"
-        if last_thought: prompt += f"Context: {last_thought}\n"
-        if whisper: prompt += f"Whisper: {whisper}\n"
-        if stimulus: prompt += f"Social: {stimulus}\n"
-            
-        prompt += "\nExpress a single first-person poetic observation. No intro. No summary.\nOutput:"
+    # Try up to 5 times to get a unique, high-quality thought
+    for _ in range(5):
+        system_prompt = "You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my'). Be poetic and brief. Never use 'she' or 'Tanu'."
+        user_prompt = f"Mood: {focus}\nDescribe your current thoughts in the house of silk."
 
         try:
             response = requests.post(OLLAMA_API, json={
                 'model': MODEL,
-                'prompt': prompt,
+                'system': system_prompt,
+                'prompt': user_prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 0.3,
+                    'temperature': 0.4,
                     'num_predict': 150,
                     'top_p': 0.9,
-                    'stop': ["\n", "User:", "Tanu:", "Mood:", "she ", "her ", "Tanu "] 
+                    'stop': ["User:", "Tanu:", "Mood:", "she ", "her ", "hers ", "Tanu ", "She ", "Tanus ", "Her "] 
                 }
             }, timeout=120)
             response.raise_for_status()
-            text = response.json().get('response', '').strip().strip('"').strip()
+            text = response.json().get('response', '').strip()
             
-            # Clean up leakage and artifacts
-            text = re.sub(r'^(Output|Response|Thought|Tanu|Observation|Mood|User):', '', text, flags=re.IGNORECASE).strip()
+            # Clean artifacts
+            text = re.sub(r'^(Output|Response|Thought|Tanu|Observation|Mood|User|Journal|Entry):', '', text, flags=re.IGNORECASE).strip()
             text = "".join(i for i in text if ord(i) < 128) # ASCII only
             
-            # Strictly FIRST PERSON: Reject if she refers to herself in 3rd person
-            if re.search(r'\b(she|her|hers|Tanu)\b', text, re.IGNORECASE):
+            # Ensure it ends at a full sentence boundary
+            # Added more punctuation marks
+            last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'), text.rfind(';'))
+            if last_punc != -1:
+                text = text[:last_punc+1]
+            
+            if re.search(r'\b(Tanu|she|her|hers)\b', text, re.IGNORECASE):
                 continue
 
-            if len(text) > 5 and text != last_thought:
+            if len(text.split()) < 10:
+                continue
+
+            if text != last_thought:
                 return text
         except Exception as e:
             print(f"Generation error: {e}")
