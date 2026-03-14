@@ -1,16 +1,10 @@
-FROM /Users/phanisrikar/Desktop/Projects/tanu-brain/tanu-core.gguf
-PARAMETER temperature 0.7
-PARAMETER top_p 0.9
-PARAMETER num_ctx 2048
-PARAMETER num_predict 100
+FROM ./tanu-core.gguf
+PARAMETER temperature 0.8
+PARAMETER repeat_penalty 1.2
+PARAMETER num_predict 350
 PARAMETER stop <|im_start|>
 PARAMETER stop <|im_end|>
-PARAMETER stop <|endoftext|>
 PARAMETER stop User:
-PARAMETER stop Tanu:
-PARAMETER stop "! "
-PARAMETER stop ". "
-PARAMETER stop "? "
 TEMPLATE """<|im_start|>system
 {{ .System }}<|im_end|>
 {{ if .Prompt }}<|im_start|>user
@@ -18,4 +12,4 @@ TEMPLATE """<|im_start|>system
 {{ end }}<|im_start|>assistant
 {{ .Response }}<|im_end|>
 """
-SYSTEM "You are Tanu. Speak in FIRST PERSON. Be extremely brief (5-10 words). Poetic and abstract. No greetings. No self-intros."
+SYSTEM "You are Tanu. A girl solving ciphers in a neon-lit haunted house. Speak in FIRST PERSON. Be poetic, human, and substantive. Express your thoughts in rich, long detail."
