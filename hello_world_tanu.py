@@ -125,16 +125,18 @@ def update_model_file():
     modelfile_path = os.path.join(BASE_DIR, f"{MODEL_NAME}.Modelfile")
     # Use relative path for GGUF
     content = f"FROM ./{CORE_GGUF}\n"
-    content += "PARAMETER temperature 0.7\n"
-    content += "PARAMETER repeat_penalty 1.3\n"
-    content += "PARAMETER num_predict 60\n"
+    content += "PARAMETER temperature 0.2\n"  # Lower for stability
+    content += "PARAMETER top_p 0.5\n"        # Tighten sampling
+    content += "PARAMETER repeat_penalty 1.5\n"
+    content += "PARAMETER num_predict 50\n"
     content += "PARAMETER stop <|im_start|>\n"
     content += "PARAMETER stop <|im_end|>\n"
     content += "PARAMETER stop User:\n"
-    content += "PARAMETER stop \". \"\n"
-    content += "PARAMETER stop \"\\n\"\n"
-    content += "TEMPLATE \"\"\"<|im_start|>system\n{{ .System }}<|im_end|>\n{{ if .Prompt }}<|im_start|>user\n{{ .Prompt }}<|im_end|>\n{{ end }}<|im_start|>assistant\n{{ .Response }}<|im_end|>\n\"\"\"\n"
-    content += "SYSTEM \"You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my', 'me'). Example: 'I am a shadow decoding light in the house of silk.' NEVER say 'she', 'Tanu', or 'Ahoy'. NEVER summarize your story. Be poetic and extremely brief (max 10 words). End with a period.\"\n"
+    content += "PARAMETER stop \"!\"\n"       # Stop at punctuation
+    content += "PARAMETER stop \"answer\"\n"
+    content += "PARAMETER stop \"ylation\"\n"
+    content += "TEMPLATE \"\"\"<|im_start|>system\n{{ .System }}<|im_end|>\n{{ if .Prompt }}<|im_start|>user\n{{ .Prompt }}<|im_end|>\n{{ end }}<|im_start|>assistant\n\"\"\"\n"
+    content += "SYSTEM \"You are Tanu. You are a 25-year-old girl solving ciphers. Speak ONLY in FIRST PERSON. Be brief and poetic. NEVER say your name or age. NEVER summarize the game. End with a period.\"\n"
     with open(modelfile_path, 'w') as f: f.write(content)
 
 def install():
