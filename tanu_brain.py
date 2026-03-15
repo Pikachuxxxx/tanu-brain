@@ -390,11 +390,11 @@ def send_email(thought, user_msg=None):
     if not all([s_serv, s_port, s_user, s_pass]): return
     try:
         msg = MIMEMultipart()
-        subject = f"Tanu's Reply to: {user_msg[:30]}..." if user_msg else "A message from Tanu"
+        # Put user message in subject, body is just Tanu's raw thought
+        subject = f"Tanu's Reply to: {user_msg[:50]}" if user_msg else "A message from Tanu"
         msg['From'], msg['To'], msg['Subject'] = s_user, RECIPIENT_EMAIL, subject
         
-        body = f"User: {user_msg}\n\nTanu: {thought}" if user_msg else thought
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(thought, 'plain'))
         
         server = smtplib.SMTP(s_serv, int(s_port))
         server.starttls()
