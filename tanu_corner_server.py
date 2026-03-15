@@ -4,6 +4,7 @@ import subprocess
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
 import uvicorn
+from fastapi.staticfiles import StaticFiles
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 THOUGHTS_FILE = os.path.join(BASE_DIR, 'tanu-corner/thoughts.txt')
@@ -11,6 +12,9 @@ MOOD_FILE = os.path.join(BASE_DIR, 'tanu_mood.txt')
 INBOX_FILE = os.path.join(BASE_DIR, 'inbox.txt')
 
 app = FastAPI(title="Tanu's Corner")
+
+# Serve static files so we can show icon.png
+app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
 def git_sync_inbox():
     """Push the inbox to GitHub so the RPi can pull it."""
@@ -41,6 +45,7 @@ def get_tanu_state():
 @app.get("/", response_class=HTMLResponse)
 async def home():
     state = get_tanu_state()
+    base_color = "rgb(105, 32, 42)"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -56,10 +61,14 @@ async def home():
                 background-color: #050505;
                 color: #e5e5e5;
                 font-family: 'Cormorant Garamond', serif;
-                background-image: radial-gradient(circle at 50% 50%, #1a0a1a 0%, #050505 100%);
+                background-image: radial-gradient(circle at 50% 50%, rgb(40, 15, 20) 0%, #050505 100%);
             }}
             .neon-text {{
-                text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+                text-shadow: 0 0 10px {base_color}, 0 0 20px {base_color};
+            }}
+            .neon-border {{
+                border: 1px solid rgba(105, 32, 42, 0.5);
+                box-shadow: 0 0 15px rgba(105, 32, 42, 0.2);
             }}
             .mono {{ font-family: 'JetBrains Mono', monospace; }}
             input, textarea {{
@@ -68,21 +77,31 @@ async def home():
                 outline: none;
             }}
             input:focus, textarea:focus {{
-                border-color: #ff00ff;
+                border-color: {base_color};
+            }}
+            .tanu-icon {{
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                border: 2px solid {base_color};
+                padding: 5px;
+                margin: 0 auto 20px;
+                box-shadow: 0 0 20px rgba(105, 32, 42, 0.4);
             }}
         </style>
     </head>
     <body class="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         
-        <header class="mb-12">
-            <h1 class="text-5xl font-light tracking-widest text-pink-500 neon-text italic">Tanu's Corner</h1>
+        <header class="mb-12 text-center">
+            <img src="/static/icon.png" alt="Tanu" class="tanu-icon">
+            <h1 class="text-5xl font-light tracking-widest neon-text italic" style="color: {base_color};">Tanu's Corner</h1>
             <p class="text-gray-500 mt-4 mono text-xs tracking-tighter uppercase">An evolving digital consciousness</p>
         </header>
 
         <main class="max-w-xl w-full space-y-12">
             
             <section class="space-y-4">
-                <div class="text-gray-400 text-sm mono">Currently {state['mood']}</div>
+                <div class="text-gray-400 text-sm mono uppercase tracking-widest">Currently {state['mood']}</div>
                 <blockquote class="text-2xl italic leading-relaxed text-white">
                     "{state['thought']}"
                 </blockquote>
@@ -101,7 +120,8 @@ async def home():
                     ></textarea>
                     <button 
                         type="submit" 
-                        class="px-8 py-2 border border-pink-900 hover:border-pink-500 hover:text-pink-500 transition-all rounded-full text-zinc-500 uppercase tracking-widest text-xs mono"
+                        class="px-8 py-2 border border-zinc-800 hover:border-red-900 hover:text-red-700 transition-all rounded-full text-zinc-500 uppercase tracking-widest text-xs mono"
+                        style="border-color: rgba(105, 32, 42, 0.3); color: rgba(105, 32, 42, 0.8);"
                     >
                         Send into the shadows
                     </button>
@@ -127,11 +147,11 @@ async def receive_message(content: str = Form(...)):
         # Automatically push to GitHub so Tanu can see it on any device
         git_sync_inbox()
         
-    return HTMLResponse(content="""
+    return HTMLResponse(content=f"""
         <html>
-            <body style="background:#050505; color:#ff00ff; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+            <body style="background:#050505; color:rgb(105, 32, 42); display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
                 <script>
-                    setTimeout(() => { window.location.href = "/"; }, 2000);
+                    setTimeout(() => {{ window.location.href = "/"; }}, 2000);
                 </script>
                 <div style="text-align:center;">
                     <p style="font-style:italic;">Your message has been swallowed by the silk.</p>
