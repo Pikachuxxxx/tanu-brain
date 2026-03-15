@@ -17,15 +17,21 @@ app = FastAPI(title="Tanu's Corner")
 app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
 def git_sync_inbox():
-    """Push the inbox to GitHub so the RPi can pull it."""
+    """Push the inbox to GitHub and trigger a brain pulse."""
     try:
-        # Check if there are actual changes to avoid git errors
+        # 1. Sync the inbox file
         subprocess.run(['git', 'add', 'inbox.txt'], cwd=BASE_DIR)
         subprocess.run(['git', 'commit', '-m', 'New whisper in the silk'], cwd=BASE_DIR)
         subprocess.run(['git', 'push', 'origin', 'master'], cwd=BASE_DIR)
-        print("Inbox synced to GitHub.")
+        
+        # 2. Trigger the brain pulse immediately (not forced-molt, just a normal pulse)
+        # We use the venv python to ensure dependencies are found
+        venv_python = os.path.join(BASE_DIR, 'venv/bin/python')
+        subprocess.run([venv_python, os.path.join(BASE_DIR, 'tanu_brain.py')], cwd=BASE_DIR)
+        
+        print("Live Pulse completed and synced.")
     except Exception as e:
-        print(f"Git sync failed: {e}")
+        print(f"Live Pulse failed: {e}")
 
 def get_tanu_state():
     thought = "Waiting for a pulse..."
