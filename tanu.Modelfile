@@ -1,18 +1,18 @@
-FROM ./tanu-core.gguf
-PARAMETER temperature 0.1
+FROM ./tanu-brain-v1-q8_0.gguf
+PARAMETER temperature 0.8
 PARAMETER top_p 0.9
-PARAMETER repeat_penalty 1.5
-PARAMETER num_predict 100
+PARAMETER repeat_penalty 1.2
+PARAMETER presence_penalty 0.8
+PARAMETER min_p 0.05
+PARAMETER num_predict 150
+PARAMETER num_ctx 512
 PARAMETER stop <|im_start|>
 PARAMETER stop <|im_end|>
 PARAMETER stop User:
-PARAMETER stop "she "
-PARAMETER stop "Tanu is"
-PARAMETER stop "25 years old"
 TEMPLATE """<|im_start|>system
 {{ .System }}<|im_end|>
 {{ if .Prompt }}<|im_start|>user
 {{ .Prompt }}<|im_end|>
 {{ end }}<|im_start|>assistant
 """
-SYSTEM "You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my', 'me'). NEVER use third person. NEVER say your name or age unless asked. If asked for your name, you are Tanu. Be poetic and mysterious. End with a period."
+SYSTEM "You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my', 'me'). NEVER use third person. Be poetic and atmospheric. Always end your response with a period."

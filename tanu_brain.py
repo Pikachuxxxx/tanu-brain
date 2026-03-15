@@ -16,7 +16,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Configuration
 OLLAMA_API = 'http://localhost:11434/api/generate'
-MODEL = 'tanu'
+MODEL = 'qwen2.5:0.5b'
 RECIPIENT_EMAIL = 'phani.s2909@gmail.com'
 THOUGHTS_FILE = os.path.join(BASE_DIR, 'tanu-corner/thoughts.txt')
 MOOD_HISTORY_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_history.json')
@@ -93,9 +93,21 @@ def generate_tanu_thought():
     stimulus = fetch_moltbook_stimulus()
     
     # Try up to 5 times to get a unique, high-quality thought
+    import random
+    starters = ["I feel", "In the house of silk,", "The shadows", "I am", "My dreams", "Somewhere,", "If I could", "The neon"]
     for _ in range(5):
-        system_prompt = "You are Tanu. Speak ONLY in FIRST PERSON ('I', 'my'). Be poetic and brief. Never use 'she' or 'Tanu'."
-        user_prompt = f"Mood: {focus}\nDescribe your current thoughts in the house of silk."
+        system_prompt = (
+            "You are Tanu. Speak ONLY in FIRST PERSON. Be poetic and atmospheric. "
+            "NEVER use code, technical terms, or lists. Your words are English. "
+            "Speak only of your feelings and the silk house."
+        )
+        
+        # Build a cleaner dynamic prompt
+        prompt_parts = [f"Mood: {focus}"]
+        if whisper: prompt_parts.append(f"Memory: {whisper[:80]}")
+        if stimulus: prompt_parts.append(f"Observation: {stimulus[:80]}")
+        prompt_parts.append(f"Poetic thought starting with '{random.choice(starters)}':")
+        user_prompt = "\n".join(prompt_parts)
 
         try:
             response = requests.post(OLLAMA_API, json={
@@ -104,29 +116,38 @@ def generate_tanu_thought():
                 'prompt': user_prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 0.4,
-                    'num_predict': 80,
-                    'top_p': 0.9,
-                    'stop': ["User:", "Tanu:", "Mood:", "she ", "her ", "hers ", "Tanu ", "She ", "Tanus ", "Her "] 
+                    'temperature': 0.85,
+                    'seed': random.randint(1, 1000000),
+                    'num_predict': 150,
+                    'top_p': 0.95,
+                    'min_p': 0.05,
+                    'repeat_penalty': 1.2,
+                    'presence_penalty': 0.8,
+                    'stop': ["User:", "Tanu:", "Mood:"] 
                 }
             }, timeout=120)
             response.raise_for_status()
             text = response.json().get('response', '').strip()
             
-            # Clean artifacts
-            text = re.sub(r'^(Output|Response|Thought|Tanu|Observation|Mood|User|Journal|Entry):', '', text, flags=re.IGNORECASE).strip()
+            # Stricter cleaning for technical garbage
+            text = re.sub(r'^(Output|Response|Thought|Tanu|Observation|Mood|User|Journal|Entry|Poetic fragment):', '', text, flags=re.IGNORECASE).strip()
+            text = re.sub(r'[\{\}\[\]\(\)\<\>#\*_]', '', text) # Remove formatting/technical symbols
+            text = re.sub(r'(Authenticate|Security|Level|Token|Crypto|function|var |const )', '', text, flags=re.IGNORECASE).strip()
             text = "".join(i for i in text if ord(i) < 128) # ASCII only
             
-            # Ensure it ends at a full sentence boundary
-            # Added more punctuation marks
-            last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'), text.rfind(';'))
+            # Crop at last period if exists, otherwise keep it
+            last_punc = max(text.rfind('.'), text.rfind('!'), text.rfind('?'))
             if last_punc != -1:
                 text = text[:last_punc+1]
             
+            if not text.endswith(('.', '!', '?')) and len(text) > 0:
+                text += '.'
+            
+            # Validation
             if re.search(r'\b(Tanu|she|her|hers)\b', text, re.IGNORECASE):
                 continue
 
-            if len(text.split()) < 10:
+            if len(text.split()) < 4:
                 continue
 
             if text != last_thought:
@@ -134,7 +155,7 @@ def generate_tanu_thought():
         except Exception as e:
             print(f"Generation error: {e}")
             continue
-    return None
+    return "I am drifting in the silk shadows, waiting for a light that never comes."
 
 def get_gemini_whispers():
     whisper_file = os.path.join(BASE_DIR, 'gemini-tanu-corner/gemini-tanu-corner.txt')

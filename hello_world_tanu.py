@@ -18,7 +18,7 @@ BASE_MODEL = 'qwen2.5:0.5b'
 BASE_DATA_FILE = os.path.join(BASE_DIR, 'tanu_base_data.jsonl')
 PERSONALITY_FILE = os.path.join(BASE_DIR, 'personality.txt')
 
-CORE_GGUF = "tanu-core.gguf"
+CORE_GGUF = "tanu-brain-v1-q8_0.gguf"
 MODEL_NAME = "tanu"
 
 def get_personality():

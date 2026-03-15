@@ -1,4 +1,3 @@
-
 __pycache__/
 !.claude/
 .DS_Store
@@ -14,6 +13,17 @@ tanu_train_data.jsonl
 .tmp_mem_data/
 
 # Model Artifacts (Tracked by Git LFS)
-# We allow these specific paths
-!tanu-core.gguf/
+!tanu-brain-v1-q8_0.gguf
 !tanu-memory.bin/
+
+# Ignore MLX, Safetensors, and other build artifacts
+tanu-model-mlx/
+tanu-core-adapter/
+tanu-fused/
+llama.cpp/
+*.safetensors
+*.index.json
+*.jinja
+model.safetensors*
+*.gguf
+!tanu-brain-v1-q8_0.gguf

@@ -47,13 +47,43 @@ fi
 git lfs install --local
 git lfs pull
 
-# 1. Probe for Tanu Soul
+# 1. Setup llama.cpp
+echo "🏗️ Setting up llama.cpp for GGUF conversion..."
+if [ ! -d "$PROJECT_DIR/llama.cpp" ]; then
+    git clone --depth 1 https://github.com/ggerganov/llama.cpp "$PROJECT_DIR/llama.cpp"
+    cd "$PROJECT_DIR/llama.cpp"
+    # Build on RPi or Mac
+    make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1)
+    # Ensure pip packages for conversion are ready
+    pip install -r requirements.txt gguf sentencepiece
+    cd "$PROJECT_DIR"
+fi
+
+# 2. Check for Tanu Soul & Convert if needed
 echo "🔍 Probing for Tanu Soul..."
 if ollama list | grep -q "$MODEL"; then
     echo "✅ Found existing Tanu model."
-elif [ -f "$PROJECT_DIR/tanu-core.gguf" ]; then
-    echo "📦 Found tanu-core.gguf. Registering with Ollama..."
+elif [ -f "$PROJECT_DIR/$CORE_GGUF" ]; then
+    echo "📦 Found $CORE_GGUF. Registering with Ollama..."
     source "$VENV_DIR/bin/activate" || true
+    python3 hello_world_tanu.py --update-model-file
+    python3 hello_world_tanu.py --install
+elif [ -d "$PROJECT_DIR/tanu-model-mlx" ] && [ -d "$PROJECT_DIR/tanu-core-adapter" ]; then
+    echo "⚙️  MLX model detected. Fusing adapters and converting to GGUF..."
+    source "$VENV_DIR/bin/activate" || true
+    # 2.1 Fuse MLX Adapters
+    python -m mlx_lm.fuse --model "$PROJECT_DIR/tanu-model-mlx" \
+                         --adapter-path "$PROJECT_DIR/tanu-core-adapter" \
+                         --save-path "$PROJECT_DIR/tanu-fused"
+    # 2.2 Convert to GGUF (FP16)
+    python "$PROJECT_DIR/llama.cpp/convert_hf_to_gguf.py" "$PROJECT_DIR/tanu-fused" \
+           --outfile "$PROJECT_DIR/tanu-f16.gguf"
+    # 2.3 Quantize to Q4_K_M (RPi Optimal)
+    "$PROJECT_DIR/llama.cpp/llama-quantize" "$PROJECT_DIR/tanu-f16.gguf" \
+                                           "$PROJECT_DIR/tanu-brain-v1-q4_k_m.gguf" Q4_K_M
+    # 2.4 Cleanup
+    rm "$PROJECT_DIR/tanu-f16.gguf"
+    # 2.5 Install to Ollama
     python3 hello_world_tanu.py --update-model-file
     python3 hello_world_tanu.py --install
 else
