@@ -16,7 +16,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Configuration
 OLLAMA_API = 'http://localhost:11434/api/generate'
-MODEL = 'qwen2.5:0.5b'
+MODEL = 'tanu'
 RECIPIENT_EMAIL = 'phani.s2909@gmail.com'
 THOUGHTS_FILE = os.path.join(BASE_DIR, 'tanu-corner/thoughts.txt')
 MOOD_HISTORY_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_history.json')
