@@ -65,7 +65,7 @@ def generate_mood_from_thoughts():
     )
     try:
         response = requests.post(OLLAMA_API, json={
-            'model': MODEL, 'prompt': prompt, 'stream': False, 'options': {'temperature': 0.3, 'num_predict': 80}
+            'model': MODEL, 'prompt': prompt, 'stream': False, 'options': {'temperature': 0.3, 'num_predict': 150}
         }, timeout=60)
         mood_text = response.json().get('response', '').strip()
         match = re.search(r'\(.*\)', mood_text)
@@ -103,7 +103,7 @@ def generate_tanu_thought(user_message=None):
             response = requests.post(OLLAMA_API, json={
                 'model': MODEL, 'system': system_prompt, 'prompt': user_prompt, 'stream': False,
                 'options': {
-                    'temperature': 0.8, 'seed': random.randint(1, 1000000), 'num_predict': 40,
+                    'temperature': 0.8, 'seed': random.randint(1, 1000000), 'num_predict': 150,
                     'top_p': 0.9, 'min_p': 0.05, 'repeat_penalty': 1.3, 'presence_penalty': 0.8,
                     'stop': ["User:", "Tanu:", "Mood:", "\n", "."] 
                 }
