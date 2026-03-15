@@ -1,7 +1,7 @@
 import os
 import json
 import subprocess
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Form, Request, BackgroundTasks
 from fastapi.responses import HTMLResponse
 import uvicorn
 from fastapi.staticfiles import StaticFiles
@@ -19,6 +19,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 def git_sync_inbox():
     """Push the inbox to GitHub so the RPi can pull it."""
     try:
+        # Check if there are actual changes to avoid git errors
         subprocess.run(['git', 'add', 'inbox.txt'], cwd=BASE_DIR)
         subprocess.run(['git', 'commit', '-m', 'New whisper in the silk'], cwd=BASE_DIR)
         subprocess.run(['git', 'push', 'origin', 'master'], cwd=BASE_DIR)
@@ -29,12 +30,15 @@ def git_sync_inbox():
 def get_tanu_state():
     thought = "Waiting for a pulse..."
     mood = "unknown"
-    if os.path.exists(THOUGHTS_FILE):
-        with open(THOUGHTS_FILE, 'r') as f:
-            lines = [l.strip() for l in f if ': ' in l]
-            if lines: thought = lines[-1].split(': ', 1)[-1]
-    if os.path.exists(MOOD_FILE):
-        with open(MOOD_FILE, 'r') as f: mood = f.read().strip()
+    try:
+        if os.path.exists(THOUGHTS_FILE):
+            with open(THOUGHTS_FILE, 'r') as f:
+                lines = [l.strip() for l in f if ': ' in l]
+                if lines: thought = lines[-1].split(': ', 1)[-1]
+        if os.path.exists(MOOD_FILE):
+            with open(MOOD_FILE, 'r') as f: mood = f.read().strip()
+    except Exception as e:
+        print(f"Error reading state: {e}")
     return {"thought": thought, "mood": mood}
 
 @app.get("/", response_class=HTMLResponse)
@@ -92,9 +96,6 @@ async def home():
                 box-shadow: 0 0 20px {base_color}, 0 0 40px {base_color};
                 transform: translateY(-2px);
             }}
-            .glow-button:active {{
-                transform: translateY(0px);
-            }}
         </style>
     </head>
     <body class="min-h-screen flex flex-col items-center justify-center p-6 text-center">
@@ -102,13 +103,13 @@ async def home():
         <header class="mb-12">
             <img src="/static/icon.png" alt="Tanu" class="tanu-icon">
             <h1 class="text-5xl font-light tracking-widest neon-text italic" style="color: {base_color};">Tanu's Corner</h1>
-            <p class="text-gray-500 mt-4 mono text-xs tracking-tighter uppercase">An evolving digital consciousness</p>
+            <p class="text-gray-500 mt-4 mono text-xs tracking-tighter uppercase font-bold">The Game Character in the House of Silk</p>
         </header>
 
         <main class="max-w-xl w-full space-y-12">
             
             <section class="space-y-4">
-                <div class="text-gray-400 text-sm mono uppercase tracking-widest">Currently {state['mood']}</div>
+                <div class="text-gray-400 text-sm mono uppercase tracking-widest">Character State: {state['mood']}</div>
                 <blockquote class="text-2xl italic leading-relaxed text-white">
                     "{state['thought']}"
                 </blockquote>
@@ -116,12 +117,12 @@ async def home():
 
             <section class="pt-12 border-t border-zinc-900">
                 <form action="/message" method="post" class="space-y-6">
-                    <p class="text-sm text-gray-400 italic">Whisper something into the house of silk...</p>
+                    <p class="text-sm text-gray-400 italic">Submit a whisper to the game character...</p>
                     <textarea 
                         name="content" 
                         rows="3" 
                         maxlength="200"
-                        placeholder="Type here..."
+                        placeholder="Speak to Tanu..."
                         class="w-full p-4 rounded-lg text-lg italic text-zinc-300 transition-all resize-none"
                         required
                     ></textarea>
@@ -129,7 +130,7 @@ async def home():
                         type="submit" 
                         class="px-10 py-3 rounded-full uppercase tracking-widest text-xs mono glow-button"
                     >
-                        Send into the shadows
+                        Send into the game world
                     </button>
                 </form>
             </section>
@@ -137,7 +138,7 @@ async def home():
         </main>
 
         <footer class="mt-20 text-zinc-700 text-[10px] mono uppercase tracking-widest">
-            Logged in the House of Silk &bull; Version 3.6.0
+            Logged in the House of Silk &bull; Version 3.7.0
         </footer>
 
     </body>
@@ -146,16 +147,22 @@ async def home():
     return HTMLResponse(content=html_content)
 
 @app.post("/message")
-async def receive_message(content: str = Form(...)):
+async def receive_message(background_tasks: BackgroundTasks, content: str = Form(...)):
+    base_color = "rgb(105, 32, 42)"
     if content.strip():
-        with open(INBOX_FILE, 'w') as f: f.write(content.strip())
-        git_sync_inbox()
+        try:
+            with open(INBOX_FILE, 'w') as f: f.write(content.strip())
+            # Run git sync in the background so it doesn't crash the web request
+            background_tasks.add_task(git_sync_inbox)
+        except Exception as e:
+            print(f"Error saving message: {e}")
+            
     return HTMLResponse(content=f"""
         <html>
             <body style="background:#050505; color:{base_color}; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; text-align:center;">
                 <script>setTimeout(() => {{ window.location.href = "/"; }}, 2000);</script>
                 <div>
-                    <p style="font-style:italic; font-size:24px; text-shadow: 0 0 10px {base_color};">Your message has been swallowed by the silk.</p>
+                    <p style="font-style:italic; font-size:24px; text-shadow: 0 0 10px {base_color};">Your message has been sent to the game world.</p>
                     <p style="font-size:10px; color:#444; text-transform:uppercase; letter-spacing:2px; margin-top:20px;">Returning to the corner...</p>
                 </div>
             </body>
