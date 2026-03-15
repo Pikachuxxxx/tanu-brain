@@ -97,8 +97,8 @@ def generate_tanu_thought():
     starters = ["I feel", "In the house of silk,", "The shadows", "I am", "My dreams", "Somewhere,", "If I could", "The neon"]
     for _ in range(5):
         system_prompt = (
-            "You are Tanu. Speak ONLY in FIRST PERSON. Be poetic and atmospheric. "
-            "NEVER use code, technical terms, or lists. Your words are English. "
+            "You are Tanu. Speak ONLY in FIRST PERSON. Be poetic and extremely brief. "
+            "Use only 10-15 words. Never use technical terms. Your words are English. "
             "Speak only of your feelings and the silk house."
         )
         
@@ -106,7 +106,7 @@ def generate_tanu_thought():
         prompt_parts = [f"Mood: {focus}"]
         if whisper: prompt_parts.append(f"Memory: {whisper[:80]}")
         if stimulus: prompt_parts.append(f"Observation: {stimulus[:80]}")
-        prompt_parts.append(f"Poetic thought starting with '{random.choice(starters)}':")
+        prompt_parts.append(f"Short poetic fragment starting with '{random.choice(starters)}':")
         user_prompt = "\n".join(prompt_parts)
 
         try:
@@ -116,14 +116,14 @@ def generate_tanu_thought():
                 'prompt': user_prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 0.85,
+                    'temperature': 0.8,
                     'seed': random.randint(1, 1000000),
-                    'num_predict': 150,
-                    'top_p': 0.95,
+                    'num_predict': 40,
+                    'top_p': 0.9,
                     'min_p': 0.05,
-                    'repeat_penalty': 1.2,
+                    'repeat_penalty': 1.3,
                     'presence_penalty': 0.8,
-                    'stop': ["User:", "Tanu:", "Mood:"] 
+                    'stop': ["User:", "Tanu:", "Mood:", "\n", "."] 
                 }
             }, timeout=120)
             response.raise_for_status()
