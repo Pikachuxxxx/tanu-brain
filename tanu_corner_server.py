@@ -29,17 +29,12 @@ def git_sync_inbox():
 def get_tanu_state():
     thought = "Waiting for a pulse..."
     mood = "unknown"
-    
     if os.path.exists(THOUGHTS_FILE):
         with open(THOUGHTS_FILE, 'r') as f:
             lines = [l.strip() for l in f if ': ' in l]
-            if lines:
-                thought = lines[-1].split(': ', 1)[-1]
-                
+            if lines: thought = lines[-1].split(': ', 1)[-1]
     if os.path.exists(MOOD_FILE):
-        with open(MOOD_FILE, 'r') as f:
-            mood = f.read().strip()
-            
+        with open(MOOD_FILE, 'r') as f: mood = f.read().strip()
     return {"thought": thought, "mood": mood}
 
 @app.get("/", response_class=HTMLResponse)
@@ -66,10 +61,6 @@ async def home():
             .neon-text {{
                 text-shadow: 0 0 10px {base_color}, 0 0 20px {base_color};
             }}
-            .neon-border {{
-                border: 1px solid rgba(105, 32, 42, 0.5);
-                box-shadow: 0 0 15px rgba(105, 32, 42, 0.2);
-            }}
             .mono {{ font-family: 'JetBrains Mono', monospace; }}
             input, textarea {{
                 background: rgba(255, 255, 255, 0.03);
@@ -78,6 +69,7 @@ async def home():
             }}
             input:focus, textarea:focus {{
                 border-color: {base_color};
+                box-shadow: 0 0 10px rgba(105, 32, 42, 0.3);
             }}
             .tanu-icon {{
                 width: 120px;
@@ -88,11 +80,26 @@ async def home():
                 margin: 0 auto 20px;
                 box-shadow: 0 0 20px rgba(105, 32, 42, 0.4);
             }}
+            .glow-button {{
+                border: 1px solid rgba(105, 32, 42, 0.4);
+                color: rgba(105, 32, 42, 0.8);
+                transition: all 0.3s ease;
+            }}
+            .glow-button:hover {{
+                border-color: {base_color};
+                color: #fff;
+                background: {base_color};
+                box-shadow: 0 0 20px {base_color}, 0 0 40px {base_color};
+                transform: translateY(-2px);
+            }}
+            .glow-button:active {{
+                transform: translateY(0px);
+            }}
         </style>
     </head>
     <body class="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         
-        <header class="mb-12 text-center">
+        <header class="mb-12">
             <img src="/static/icon.png" alt="Tanu" class="tanu-icon">
             <h1 class="text-5xl font-light tracking-widest neon-text italic" style="color: {base_color};">Tanu's Corner</h1>
             <p class="text-gray-500 mt-4 mono text-xs tracking-tighter uppercase">An evolving digital consciousness</p>
@@ -120,8 +127,7 @@ async def home():
                     ></textarea>
                     <button 
                         type="submit" 
-                        class="px-8 py-2 border border-zinc-800 hover:border-red-900 hover:text-red-700 transition-all rounded-full text-zinc-500 uppercase tracking-widest text-xs mono"
-                        style="border-color: rgba(105, 32, 42, 0.3); color: rgba(105, 32, 42, 0.8);"
+                        class="px-10 py-3 rounded-full uppercase tracking-widest text-xs mono glow-button"
                     >
                         Send into the shadows
                     </button>
@@ -131,7 +137,7 @@ async def home():
         </main>
 
         <footer class="mt-20 text-zinc-700 text-[10px] mono uppercase tracking-widest">
-            Logged in the House of Silk &bull; Version 3.5.0
+            Logged in the House of Silk &bull; Version 3.6.0
         </footer>
 
     </body>
@@ -142,20 +148,15 @@ async def home():
 @app.post("/message")
 async def receive_message(content: str = Form(...)):
     if content.strip():
-        with open(INBOX_FILE, 'w') as f:
-            f.write(content.strip())
-        # Automatically push to GitHub so Tanu can see it on any device
+        with open(INBOX_FILE, 'w') as f: f.write(content.strip())
         git_sync_inbox()
-        
     return HTMLResponse(content=f"""
         <html>
-            <body style="background:#050505; color:rgb(105, 32, 42); display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
-                <script>
-                    setTimeout(() => {{ window.location.href = "/"; }}, 2000);
-                </script>
-                <div style="text-align:center;">
-                    <p style="font-style:italic;">Your message has been swallowed by the silk.</p>
-                    <p style="font-size:10px; color:#444;">Returning to the corner...</p>
+            <body style="background:#050505; color:{base_color}; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; text-align:center;">
+                <script>setTimeout(() => {{ window.location.href = "/"; }}, 2000);</script>
+                <div>
+                    <p style="font-style:italic; font-size:24px; text-shadow: 0 0 10px {base_color};">Your message has been swallowed by the silk.</p>
+                    <p style="font-size:10px; color:#444; text-transform:uppercase; letter-spacing:2px; margin-top:20px;">Returning to the corner...</p>
                 </div>
             </body>
         </html>
