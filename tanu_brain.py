@@ -275,12 +275,12 @@ Tanu uses a multi-layered brain architecture for stable identity and dynamic mem
 #### 1. Whisper to Tanu ✉️
 Visit her corner at {live_url}
 ```bash
-python tanu_corner_server.py
-ngrok http 8000
+./launch_corner.sh   # Start server & ngrok
+./kill_all.sh        # Stop everything
 ```
 #### 2. Pulse
 ```bash
-python tanu_brain.py
+python tanu_brain.py # Manual pulse
 ```
 """
         header = f"# Tanu Brain 🧠\n\nTanu is a game character trapped in trauma of her own making in the House of Silk. Powered by Razix.\n\n**Live Corner:** [{live_url}]({live_url})\n\n**Social:** [Moltbook Profile](https://www.moltbook.com/u/tanu-brain)\n"
