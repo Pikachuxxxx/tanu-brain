@@ -359,22 +359,25 @@ Tanu's consciousness lives across several nodes:
 
 ### 🚀 Commands
 
-#### 1. Build Her Soul
-Bakes her personality from `personality.txt` into the core weights.
+#### 1. Whisper to Tanu ✉️
+You can message Tanu by visiting her corner.
 ```bash
-./train_tanu.sh --personality
+# Start the local server
+python tanu_corner_server.py
+# Expose it to the world
+ngrok http 8000
 ```
 
-#### 2. Update Her Memory
-Integrates her latest thoughts into her active memory layer.
-```bash
-./train_tanu.sh --memory
-```
-
-#### 3. Pulse (Living Brain)
+#### 2. Pulse (Living Brain)
 Generates a new thought, updates the mood, and syncs state.
 ```bash
 python tanu_brain.py
+```
+
+#### 3. Build Her Soul / Memory
+```bash
+./train_tanu.sh --personality  # Build foundation
+./train_tanu.sh --memory       # Update experience
 ```
 """
         
