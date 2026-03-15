@@ -290,7 +290,7 @@ def post_to_moltbook(thought):
     return False
 
 def check_moltbook_activity():
-    if not MOLTBOOK_API_KEY: return None
+    if not MOLTBOOK_API_KEY: return None, None
     headers = {'Authorization': f'Bearer {MOLTBOOK_API_KEY}'}
     try:
         # Check if 4 hours have passed since last moltbook reply
@@ -302,7 +302,7 @@ def check_moltbook_activity():
         current_time = time.time()
         # 4 hours = 14400 seconds
         if (current_time - last_reply_time) < 14400:
-            return None
+            return None, None
 
         r = requests.get(f'{MOLTBOOK_BASE_URL}/home', headers=headers, timeout=30)
         data = r.json()
@@ -316,6 +316,8 @@ def check_moltbook_activity():
                     # Get latest notification message
                     notif = n_data['notifications'][0]
                     msg = notif.get('message', '')
+                    post_id = notif.get('post_id') # Extract the ID to reply to
+                    
                     # Mark all as read
                     requests.post(f'{MOLTBOOK_BASE_URL}/notifications/read-all', headers=headers, timeout=10)
                     
@@ -323,12 +325,36 @@ def check_moltbook_activity():
                     with open(LAST_MOLT_REPLY_FILE, 'w') as f:
                         f.write(str(current_time))
                     
-                    return f"[Moltbook] {msg}"
+                    return f"[Moltbook] {msg}", post_id
     except Exception as e:
         print(f"Moltbook activity check failed: {e}")
-    return None
+    return None, None
 
-def update_readme():
+def post_to_moltbook(thought, reply_to_id=None):
+    if not MOLTBOOK_API_KEY: return
+    headers = {'Authorization': f'Bearer {MOLTBOOK_API_KEY}', 'Content-Type': 'application/json'}
+    
+    if reply_to_id:
+        # Send a direct comment reply
+        endpoint = f'{MOLTBOOK_BASE_URL}/posts/{reply_to_id}/comments'
+        post_data = {'content': thought}
+    else:
+        # Create a new post
+        endpoint = f'{MOLTBOOK_BASE_URL}/posts'
+        submolt = select_submolt(thought)
+        post_data = {'submolt_name': submolt, 'title': thought[:50] + '...' if len(thought) > 50 else thought, 'content': thought, 'type': 'text'}
+    
+    try:
+        r = requests.post(endpoint, headers=headers, json=post_data, timeout=60)
+        res = r.json()
+        if res.get('success'): return True
+        if 'challenge_text' in res:
+            answer = solve_lobster_math(res['challenge_text'])
+            verify_data = {'verification_code': res['verification_code'], 'answer': answer}
+            v_r = requests.post(f'{MOLTBOOK_BASE_URL}/verify', headers=headers, json=verify_data, timeout=30)
+            if v_r.json().get('success'): return True
+    except: pass
+    return False
     try:
         README_PATH = os.path.join(BASE_DIR, 'README.md')
         with open(THOUGHTS_FILE, 'r') as f:
