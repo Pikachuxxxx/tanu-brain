@@ -289,7 +289,9 @@ def post_to_moltbook(thought):
     except: pass
     return False
 
-def check_moltbook_activity():
+import argparse
+
+def check_moltbook_activity(force=False):
     if not MOLTBOOK_API_KEY: return None, None
     headers = {'Authorization': f'Bearer {MOLTBOOK_API_KEY}'}
     try:
@@ -301,7 +303,7 @@ def check_moltbook_activity():
         
         current_time = time.time()
         # 4 hours = 14400 seconds
-        if (current_time - last_reply_time) < 14400:
+        if not force and (current_time - last_reply_time) < 14400:
             return None, None
 
         r = requests.get(f'{MOLTBOOK_BASE_URL}/home', headers=headers, timeout=30)
@@ -449,9 +451,15 @@ def git_sync():
         print(f"Git sync failed: {e}")
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--force-molt', action='store_true', help='Force check for Moltbook notifications')
+    args = parser.parse_args()
+
     git_sync()
     
     user_msg = None
+    reply_to_id = None
+    
     # 1. Check local inbox (takes priority)
     if os.path.exists(INBOX_FILE):
         with open(INBOX_FILE, 'r') as f:
@@ -461,9 +469,9 @@ if __name__ == '__main__':
             with open(INBOX_FILE, 'w') as f:
                 f.write('')
     
-    # 2. If local inbox is empty, check Moltbook notifications (every 4 hours)
+    # 2. If local inbox is empty, check Moltbook notifications (every 4 hours or if forced)
     if not user_msg:
-        user_msg = check_moltbook_activity()
+        user_msg, reply_to_id = check_moltbook_activity(force=args.force_molt)
         if user_msg:
             print(f"Processing Moltbook notification: {user_msg}")
 

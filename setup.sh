@@ -148,17 +148,26 @@ fi
 # 5. Create necessary folders
 mkdir -p "$PROJECT_DIR/gemini-tanu-corner"
 
-# 6. Setup Cronjob (Hourly)
-echo "⏰ Setting up hourly cronjob..."
+# 6. Setup Cronjobs
+echo "⏰ Setting up cronjobs..."
 TMP_CRON=$(mktemp)
-crontab -l 2>/dev/null | grep -v "tanu_brain.py" | grep -v "SHELL=/bin/bash" | grep -v "PATH=/usr/local/bin" > "$TMP_CRON"
+# Clear old entries
+crontab -l 2>/dev/null | grep -v "tanu_brain.py" | grep -v "launch_corner.sh" | grep -v "SHELL=/bin/bash" | grep -v "PATH=/usr/local/bin" > "$TMP_CRON"
 {
     echo "SHELL=/bin/bash"
     echo "PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    # Hourly Pulse
     echo "0 * * * * cd $PROJECT_DIR && $CRON_PYTHON tanu_brain.py >> $LOG_FILE 2>&1"
+    # Daily Forced Moltbook Reply (at midnight)
+    echo "0 0 * * * cd $PROJECT_DIR && $CRON_PYTHON tanu_brain.py --force-molt >> $LOG_FILE 2>&1"
+    # Persistent Web Server (on reboot)
+    echo "@reboot cd $PROJECT_DIR && ./launch_corner.sh >> $LOG_FILE 2>&1"
 } >> "$TMP_CRON"
 crontab "$TMP_CRON"
 rm "$TMP_CRON"
+
+# Launch server now for immediate use
+./launch_corner.sh
 
 echo "✨ Setup complete! Tanu will speak at the top of every hour."
 echo "📜 Check $LOG_FILE for execution logs."
