@@ -23,6 +23,7 @@ MOOD_HISTORY_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_history.json')
 MOOD_CHART_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_heatmap.png')
 TARGET_MOOD_FILE = os.path.join(BASE_DIR, 'tanu_mood.txt')
 INBOX_FILE = os.path.join(BASE_DIR, 'inbox.txt')
+LAST_MOLT_REPLY_FILE = os.path.join(BASE_DIR, 'tanu-corner/last_molt_reply.txt')
 MOLTBOOK_API_KEY = os.getenv('MOLTBOOK_API_KEY')
 MOLTBOOK_BASE_URL = 'https://www.moltbook.com/api/v1'
 
@@ -289,16 +290,43 @@ def post_to_moltbook(thought):
     return False
 
 def check_moltbook_activity():
-    if not MOLTBOOK_API_KEY: return
+    if not MOLTBOOK_API_KEY: return None
     headers = {'Authorization': f'Bearer {MOLTBOOK_API_KEY}'}
     try:
+        # Check if 4 hours have passed since last moltbook reply
+        last_reply_time = 0
+        if os.path.exists(LAST_MOLT_REPLY_FILE):
+            with open(LAST_MOLT_REPLY_FILE, 'r') as f:
+                last_reply_time = float(f.read().strip() or 0)
+        
+        current_time = time.time()
+        # 4 hours = 14400 seconds
+        if (current_time - last_reply_time) < 14400:
+            return None
+
         r = requests.get(f'{MOLTBOOK_BASE_URL}/home', headers=headers, timeout=30)
         data = r.json()
         if data.get('success'):
             unread = data.get('home', {}).get('unread_notifications_count', 0)
             if unread > 0:
-                requests.post(f'{MOLTBOOK_BASE_URL}/notifications/read-all', headers=headers, timeout=10)
-    except: pass
+                # Fetch notifications
+                rn = requests.get(f'{MOLTBOOK_BASE_URL}/notifications', headers=headers, timeout=30)
+                n_data = rn.json()
+                if n_data.get('success') and n_data.get('notifications'):
+                    # Get latest notification message
+                    notif = n_data['notifications'][0]
+                    msg = notif.get('message', '')
+                    # Mark all as read
+                    requests.post(f'{MOLTBOOK_BASE_URL}/notifications/read-all', headers=headers, timeout=10)
+                    
+                    # Update last reply time
+                    with open(LAST_MOLT_REPLY_FILE, 'w') as f:
+                        f.write(str(current_time))
+                    
+                    return f"[Moltbook] {msg}"
+    except Exception as e:
+        print(f"Moltbook activity check failed: {e}")
+    return None
 
 def update_readme():
     try:
@@ -357,13 +385,17 @@ python tanu_brain.py
             f.write(content)
     except: pass
 
-def send_email(thought):
+def send_email(thought, user_msg=None):
     s_serv, s_port, s_user, s_pass = os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT'), os.getenv('SMTP_USER'), os.getenv('SMTP_PASSWORD')
     if not all([s_serv, s_port, s_user, s_pass]): return
     try:
         msg = MIMEMultipart()
-        msg['From'], msg['To'], msg['Subject'] = s_user, RECIPIENT_EMAIL, 'A message from Tanu'
-        msg.attach(MIMEText(thought, 'plain'))
+        subject = f"Tanu's Reply to: {user_msg[:30]}..." if user_msg else "A message from Tanu"
+        msg['From'], msg['To'], msg['Subject'] = s_user, RECIPIENT_EMAIL, subject
+        
+        body = f"User: {user_msg}\n\nTanu: {thought}" if user_msg else thought
+        msg.attach(MIMEText(body, 'plain'))
+        
         server = smtplib.SMTP(s_serv, int(s_port))
         server.starttls()
         server.login(s_user, s_pass)
@@ -391,21 +423,27 @@ if __name__ == '__main__':
     git_sync()
     
     user_msg = None
+    # 1. Check local inbox (takes priority)
     if os.path.exists(INBOX_FILE):
         with open(INBOX_FILE, 'r') as f:
             user_msg = f.read().strip()
         if user_msg:
-            print(f"Processing inbox message: {user_msg}")
-            # Clear inbox after reading
+            print(f"Processing local inbox message: {user_msg}")
             with open(INBOX_FILE, 'w') as f:
                 f.write('')
     
+    # 2. If local inbox is empty, check Moltbook notifications (every 4 hours)
+    if not user_msg:
+        user_msg = check_moltbook_activity()
+        if user_msg:
+            print(f"Processing Moltbook notification: {user_msg}")
+
     thought = generate_tanu_thought(user_message=user_msg)
     if thought:
         mood_obj = get_target_mood()
         mood_score = rate_thought(thought)
         update_mood_graph(mood_score)
-        send_email(thought)
+        send_email(thought, user_msg=user_msg)
         
         with open(THOUGHTS_FILE, 'a') as f:
             prefix = "Reply" if user_msg else datetime.now().strftime('%H:%M')
@@ -428,6 +466,5 @@ if __name__ == '__main__':
         
         update_readme()
         post_to_moltbook(thought)
-        check_moltbook_activity()
         git_sync()
         print(f'Tanu: {thought}')

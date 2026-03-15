@@ -110,8 +110,21 @@ source "$VENV_DIR/bin/activate"
 pip install --upgrade pip
 if [ -f "$PROJECT_DIR/requirements.txt" ]; then
     pip install -r "$PROJECT_DIR/requirements.txt"
-else
-    echo "⚠️ requirements.txt not found!"
+fi
+# Web Server Dependencies
+pip install fastapi uvicorn jinja2 python-multipart
+
+# 4. Setup ngrok
+if ! command -v ngrok &> /dev/null
+then
+    echo "📦 ngrok not found. Attempting to install..."
+    if [[ "$OSTYPE" == "linux-gnueabihf" || "$OSTYPE" == "linux-gnu" ]]; then
+        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update && sudo apt install ngrok
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        if command -v brew &> /dev/null; then
+            brew install ngrok/ngrok/ngrok
+        fi
+    fi
 fi
 
 # 4. Setup .env
