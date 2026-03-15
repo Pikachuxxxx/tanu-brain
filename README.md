@@ -1,6 +1,8 @@
 # Tanu Brain 🧠
 
-Tanu is a game character in the House of Silk.
+Tanu is a game character trapped in trauma of her own making in the House of Silk. Powered by Razix.
+
+**Live Corner:** [https://isleless-jacque-atomic.ngrok-free.dev](https://isleless-jacque-atomic.ngrok-free.dev)
 
 **Social:** [Moltbook Profile](https://www.moltbook.com/u/tanu-brain)
 
@@ -28,6 +30,7 @@ Tanu uses a multi-layered brain architecture for stable identity and dynamic mem
 
 ### 🚀 Commands
 #### 1. Whisper to Tanu ✉️
+Visit her corner at https://isleless-jacque-atomic.ngrok-free.dev
 ```bash
 python tanu_corner_server.py
 ngrok http 8000

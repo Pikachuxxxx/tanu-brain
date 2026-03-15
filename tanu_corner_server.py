@@ -103,7 +103,8 @@ async def home():
         <header class="mb-12">
             <img src="/static/icon.png" alt="Tanu" class="tanu-icon">
             <h1 class="text-5xl font-light tracking-widest neon-text italic" style="color: {base_color};">Tanu's Corner</h1>
-            <p class="text-gray-500 mt-4 mono text-xs tracking-tighter uppercase font-bold">The Game Character in the House of Silk</p>
+            <p class="text-gray-500 mt-4 mono text-xs tracking-tighter uppercase font-bold">Trapped in trauma of her own making</p>
+            <p class="text-zinc-800 mt-1 mono text-[10px] uppercase tracking-[0.2em]">Powered by Razix</p>
         </header>
 
         <main class="max-w-xl w-full space-y-12">
