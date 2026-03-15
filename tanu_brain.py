@@ -22,6 +22,7 @@ THOUGHTS_FILE = os.path.join(BASE_DIR, 'tanu-corner/thoughts.txt')
 MOOD_HISTORY_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_history.json')
 MOOD_CHART_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_heatmap.png')
 TARGET_MOOD_FILE = os.path.join(BASE_DIR, 'tanu_mood.txt')
+INBOX_FILE = os.path.join(BASE_DIR, 'inbox.txt')
 MOLTBOOK_API_KEY = os.getenv('MOLTBOOK_API_KEY')
 MOLTBOOK_BASE_URL = 'https://www.moltbook.com/api/v1'
 
@@ -85,7 +86,7 @@ def generate_mood_from_thoughts():
     except:
         return "(low, drifting)"
 
-def generate_tanu_thought():
+def generate_tanu_thought(user_message=None):
     mood_obj = get_target_mood()
     energy, focus = mood_obj['energy'], mood_obj['focus']
     last_thought = get_last_thought()
@@ -106,7 +107,13 @@ def generate_tanu_thought():
         prompt_parts = [f"Mood: {focus}"]
         if whisper: prompt_parts.append(f"Memory: {whisper[:80]}")
         if stimulus: prompt_parts.append(f"Observation: {stimulus[:80]}")
-        prompt_parts.append(f"Short poetic fragment starting with '{random.choice(starters)}':")
+        
+        if user_message:
+            prompt_parts.append(f"User: {user_message}")
+            prompt_parts.append("Your poetic reply:")
+        else:
+            prompt_parts.append(f"Short poetic fragment starting with '{random.choice(starters)}':")
+            
         user_prompt = "\n".join(prompt_parts)
 
         try:
@@ -382,7 +389,18 @@ def git_sync():
 
 if __name__ == '__main__':
     git_sync()
-    thought = generate_tanu_thought()
+    
+    user_msg = None
+    if os.path.exists(INBOX_FILE):
+        with open(INBOX_FILE, 'r') as f:
+            user_msg = f.read().strip()
+        if user_msg:
+            print(f"Processing inbox message: {user_msg}")
+            # Clear inbox after reading
+            with open(INBOX_FILE, 'w') as f:
+                f.write('')
+    
+    thought = generate_tanu_thought(user_message=user_msg)
     if thought:
         mood_obj = get_target_mood()
         mood_score = rate_thought(thought)
@@ -390,7 +408,8 @@ if __name__ == '__main__':
         send_email(thought)
         
         with open(THOUGHTS_FILE, 'a') as f:
-            f.write(f"{datetime.now().strftime('%H:%M')}: {thought}\n")
+            prefix = "Reply" if user_msg else datetime.now().strftime('%H:%M')
+            f.write(f"{prefix}: {thought}\n")
             
         train_data_file = os.path.join(BASE_DIR, 'tanu_train_data.jsonl')
         train_entry = {
@@ -400,7 +419,7 @@ if __name__ == '__main__':
                     "energy": mood_obj['energy'],
                     "focus": mood_obj['focus']
                 },
-                "message": None
+                "message": user_msg
             },
             "output": thought
         }
