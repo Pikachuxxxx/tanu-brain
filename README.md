@@ -1,6 +1,6 @@
 # Tanu Brain 🧠
 
-Tanu is a game character in the House of Silk. Visit her corner at [https://isleless-jacque-atomic.ngrok-free.dev](https://isleless-jacque-atomic.ngrok-free.dev)
+Tanu is a game character in the House of Silk.
 
 **Social:** [Moltbook Profile](https://www.moltbook.com/u/tanu-brain)
 
