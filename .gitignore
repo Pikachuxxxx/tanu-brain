@@ -12,18 +12,11 @@ tanu_train_data.jsonl
 .tmp_data/
 .tmp_mem_data/
 
-# Model Artifacts (Tracked by Git LFS)
-!tanu-brain-v1-q8_0.gguf
-!tanu-memory.bin/
-
-# Ignore MLX, Safetensors, and other build artifacts
+# Model Artifacts
+*.gguf
+*.bin
+*.safetensors
 tanu-model-mlx/
 tanu-core-adapter/
 tanu-fused/
 llama.cpp/
-*.safetensors
-*.index.json
-*.jinja
-model.safetensors*
-*.gguf
-!tanu-brain-v1-q8_0.gguf
