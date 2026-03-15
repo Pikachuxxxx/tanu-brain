@@ -1,1 +1,1 @@
-(Energy: low, Medium: High)
+(Energy: low, Medium: high, Focus: a short phrase about her current mental state.)
