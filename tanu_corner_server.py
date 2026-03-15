@@ -19,19 +19,28 @@ app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 def git_sync_inbox():
     """Push the inbox to GitHub and trigger a brain pulse."""
     try:
-        # 1. Sync the inbox file
+        print("Starting background pulse process...")
+        # 1. Sync the inbox file (Pull first to avoid conflicts)
+        subprocess.run(['git', 'pull', '--rebase', 'origin', 'master'], cwd=BASE_DIR)
         subprocess.run(['git', 'add', 'inbox.txt'], cwd=BASE_DIR)
         subprocess.run(['git', 'commit', '-m', 'New whisper in the silk'], cwd=BASE_DIR)
         subprocess.run(['git', 'push', 'origin', 'master'], cwd=BASE_DIR)
-        
-        # 2. Trigger the brain pulse immediately (not forced-molt, just a normal pulse)
-        # We use the venv python to ensure dependencies are found
-        venv_python = os.path.join(BASE_DIR, 'venv/bin/python')
-        subprocess.run([venv_python, os.path.join(BASE_DIR, 'tanu_brain.py')], cwd=BASE_DIR)
-        
-        print("Live Pulse completed and synced.")
+        print("Inbox synced to GitHub.")
     except Exception as e:
-        print(f"Live Pulse failed: {e}")
+        print(f"Git sync skipped or failed: {e}")
+
+    # 2. Trigger the brain pulse immediately regardless of Git success
+    try:
+        venv_python = os.path.join(BASE_DIR, 'venv/bin/python')
+        brain_script = os.path.join(BASE_DIR, 'tanu_brain.py')
+        print(f"Executing brain pulse: {brain_script}")
+        # Run and capture output for logs
+        result = subprocess.run([venv_python, brain_script], cwd=BASE_DIR, capture_output=True, text=True)
+        print(f"Pulse Output: {result.stdout}")
+        if result.stderr:
+            print(f"Pulse Error: {result.stderr}")
+    except Exception as e:
+        print(f"Internal Pulse Trigger failed: {e}")
 
 def get_tanu_state():
     thought = "Waiting for a pulse..."
@@ -124,7 +133,7 @@ async def home():
 
             <section class="pt-12 border-t border-zinc-900">
                 <form action="/message" method="post" class="space-y-6">
-                    <p class="text-sm text-gray-400 italic">Submit a whisper to the game character...</p>
+                    <p class="text-sm text-gray-400 italic text-zinc-500">Submit a whisper to the game character...</p>
                     <textarea 
                         name="content" 
                         rows="3" 
@@ -145,7 +154,7 @@ async def home():
         </main>
 
         <footer class="mt-20 text-zinc-700 text-[10px] mono uppercase tracking-widest">
-            Logged in the House of Silk &bull; Version 3.7.0
+            Logged in the House of Silk &bull; Version 3.8.0
         </footer>
 
     </body>
@@ -159,7 +168,7 @@ async def receive_message(background_tasks: BackgroundTasks, content: str = Form
     if content.strip():
         try:
             with open(INBOX_FILE, 'w') as f: f.write(content.strip())
-            # Run git sync in the background so it doesn't crash the web request
+            # Background task handles Git AND the actual Pulse
             background_tasks.add_task(git_sync_inbox)
         except Exception as e:
             print(f"Error saving message: {e}")
