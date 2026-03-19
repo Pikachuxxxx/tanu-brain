@@ -114,7 +114,7 @@ def generate_tanu_thought(user_message=None):
                     'min_p': 0.05,
                     'repeat_penalty': 1.2,
                     'presence_penalty': 0.8,
-                    'stop': ["User Message:", "Tanu:", "Mood:", "\n\n"] 
+                    'stop': ["User Message:", "Tanu:", "Mood:", "\n\n", "labyrinth", "silk", "fabric", "weave", "tapestry"] 
                 }
             }, timeout=120)
             response.raise_for_status()
