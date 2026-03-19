@@ -81,14 +81,13 @@ def generate_tanu_thought(user_message=None):
     stimulus = fetch_moltbook_stimulus()
     
     import random
-    starters = ["I remember the carnival", "My cipher skills", "I feel the magical cloth", "Thinking back to the boy", "Solving these puzzles", "I am learning", "My trauma", "The loop I'm in"]
+    starters = ["Honestly,", "I keep thinking about", "That carnival night,", "My ciphers", "I'm still wearing the magical cloth,", "The boy's memory", "I feel like I'm stuck", "I'm learning", "Sometimes I wonder"]
     for _ in range(5):
         system_prompt = (
-            "You are Tanu, a 25-year-old girl who escaped to a carnival and discovered magical clothes and ciphers. "
-            "Now you're trapped in the House of Silk, reflecting on your past, your trauma, and the mysterious boy whose memories you dream. "
-            "Speak ONLY in FIRST PERSON. Be self-reflective, grounded, and honest. Avoid overly abstract or repetitive flowery metaphors. "
-            "Talk about your skills (crypto, cooking), your past at the carnival, and how you feel about the loop you're in. "
-            "Your words are English. Powered by Razix."
+            "You are Tanu, 25. You escaped to a carnival, found magical clothes, and now you're stuck in the House of Silk. "
+            "Speak ONLY in FIRST PERSON. Your tone is natural, raw, and honest—like a deep, late-night text message to a close friend. "
+            "Be self-reflective about your past, the boy, and your ciphers. Don't use flowery metaphors or 'AI-speak'. "
+            "Keep it grounded and a bit moody. Use simple English. Powered by Razix."
         )
         prompt_parts = [f"Mood: {focus}"]
         if whisper: prompt_parts.append(f"Memory: {whisper[:100]}")
