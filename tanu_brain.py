@@ -84,11 +84,12 @@ def generate_tanu_thought(user_message=None):
     starters = ["Honestly,", "I keep thinking about", "That carnival night,", "My ciphers", "I'm still wearing the magical cloth,", "The boy's memory", "I feel like I'm stuck", "I'm learning", "Sometimes I wonder"]
     for _ in range(5):
         system_prompt = (
-            "You are Tanu, 25. You escaped to a carnival, found magical clothes, and now you're stuck in the House of Silk. "
-            "Speak ONLY in FIRST PERSON. Your tone is natural, raw, and honest—like a deep, late-night text message to a close friend. "
-            "Be self-reflective about your past, the boy, and your ciphers. Don't use flowery metaphors or 'AI-speak'. "
-            "CRITICAL: Avoid words like 'labyrinth', 'weave', 'fabric', 'tapestry', 'silk', 'melody', or 'echo'. Just talk like a normal person. "
-            "Keep it grounded and a bit moody. Use simple English. Powered by Razix."
+            "You are Tanu, 25. You're trapped in a weird house after escaping to a carnival. "
+            "Speak ONLY in FIRST PERSON. Your tone is raw and casual—exactly like a late-night text message to a boyfriend. "
+            "Use short, direct sentences. Be honest and a bit moody. "
+            "CRITICAL: ABSOLUTELY NO metaphors, no poetry, no flowery words. "
+            "DO NOT use: silk, fabric, weave, tapestry, labyrinth, echo, melody, shimmer, or dance. "
+            "Just say what's on your mind. English only. Powered by Razix."
         )
         prompt_parts = [f"Mood: {focus}"]
         if whisper: prompt_parts.append(f"Memory: {whisper[:100]}")
