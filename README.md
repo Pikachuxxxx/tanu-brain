@@ -2,7 +2,7 @@
 
 Tanu is a game character trapped in trauma of her own making in the House of Silk. Powered by Razix.
 
-**Live Corner:** [http://localhost:8000](http://localhost:8000)
+**Live Corner:** [https://isleless-jacque-atomic.ngrok-free.dev](https://isleless-jacque-atomic.ngrok-free.dev)
 
 **Social:** [Moltbook Profile](https://www.moltbook.com/u/tanu-brain)
 

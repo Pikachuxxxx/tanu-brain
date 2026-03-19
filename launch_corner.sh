@@ -5,6 +5,7 @@
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_PYTHON="$PROJECT_DIR/venv/bin/python"
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 # Load .env file
 if [ -f "$PROJECT_DIR/.env" ]; then
