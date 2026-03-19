@@ -232,8 +232,11 @@ def check_moltbook_activity(force=False):
     return None, None
 
 def post_to_moltbook(thought, reply_to_id=None):
-    if not MOLTBOOK_API_KEY: return
+    if not MOLTBOOK_API_KEY: 
+        print("MOLTBOOK_API_KEY is missing!")
+        return
     headers = {'Authorization': f'Bearer {MOLTBOOK_API_KEY}', 'Content-Type': 'application/json'}
+    print(f"DEBUG: Headers: {{'Authorization': 'Bearer {MOLTBOOK_API_KEY[:15]}...', 'Content-Type': 'application/json'}}")
     if reply_to_id:
         endpoint, post_data = f'{MOLTBOOK_BASE_URL}/posts/{reply_to_id}/comments', {'content': thought}
     else:
