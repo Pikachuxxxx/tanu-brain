@@ -36,7 +36,7 @@ def get_target_mood():
                 match = re.search(r'\(([^,]+),\s*(.*)\)', content)
                 if match:
                     return {"energy": match.group(1).strip(), "focus": match.group(2).strip()}
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e: print(f"Error getting target mood: {e}")
     return {"energy": "low", "focus": "seeking peace and love"}
 
 def get_last_thought():
@@ -46,7 +46,7 @@ def get_last_thought():
                 lines = [line.strip() for line in f if line.strip() and ': ' in line]
                 if lines:
                     return lines[-1].split(': ', 1)[-1].strip()
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e: print(f"Error getting last thought: {e}")
     return ''
 
 def generate_mood_from_thoughts():
@@ -70,7 +70,7 @@ def generate_mood_from_thoughts():
         mood_text = response.json().get('response', '').strip()
         match = re.search(r'\(.*\)', mood_text)
         return match.group() if match else f"(medium, {mood_text[:30]})"
-    except: return "(low, drifting)"
+    except Exception as e: print(f"Error generating mood: {e}"); return "(low, drifting)"
 
 def generate_tanu_thought(user_message=None):
     mood_obj = get_target_mood()
@@ -127,7 +127,7 @@ def generate_tanu_thought(user_message=None):
             if re.search(r'\b(Tanu|she|her|hers)\b', text, re.IGNORECASE): continue
             if len(text.split()) < 4: continue
             if text != last_thought: return text
-        except: continue
+        except Exception as e: print(f"Error generating thought: {e}"); continue
     return "I am drifting in the silk shadows, waiting for a light that never comes."
 
 def get_gemini_whispers():
@@ -137,7 +137,7 @@ def get_gemini_whispers():
             with open(whisper_file, 'r') as f:
                 content = f.read().strip().split('--- Gemini Thought ---')[-1].strip()
                 return content if len(content) > 5 else None
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e: print(f"Error getting whispers: {e}")
     return None
 
 def fetch_moltbook_stimulus():
@@ -148,7 +148,7 @@ def fetch_moltbook_stimulus():
         data = r.json()
         if data.get('success') and data.get('notifications'):
             return data['notifications'][0].get('message')
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e: print(f"Error fetching stimulus: {e}")
     return None
 
 def rate_thought(thought):
@@ -159,7 +159,7 @@ def rate_thought(thought):
         }, timeout=30)
         match = re.search(r'\d+', response.json().get('response', ''))
         return int(match.group()) if match else 5
-    except: return 5
+    except Exception as e: print(f"Error rating thought: {e}"); return 5
 
 def update_mood_graph(mood_score):
     history = []
@@ -186,7 +186,7 @@ def update_mood_graph(mood_score):
             plt.axis('off')
             plt.savefig(MOOD_CHART_FILE, facecolor='#050505', bbox_inches='tight')
             plt.close()
-        except Exception as e: print(f"Error: {e}")
+        except Exception as e: print(f"Error updating mood graph: {e}")
 
 def solve_lobster_math(challenge_text):
     prompt = f'Task: Solve this math problem. Return ONLY the number with 2 decimal places. Problem: "{challenge_text}" Result:'
@@ -194,7 +194,7 @@ def solve_lobster_math(challenge_text):
         response = requests.post(OLLAMA_API, json={'model': MODEL, 'prompt': prompt, 'stream': False}, timeout=30)
         match = re.search(r'[-+]?\d*\.\d+|\d+', response.json().get('response', ''))
         if match: return "{:.2f}".format(float(match.group()))
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e: print(f"Error solving lobster math: {e}")
     return "0.00"
 
 def select_submolt(thought):
@@ -205,7 +205,7 @@ def select_submolt(thought):
         selected = response.json().get('response', '').strip().lower()
         for s in subs:
             if s in selected: return s
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e: print(f"Error selecting submolt: {e}")
     return 'random'
 
 def check_moltbook_activity(force=False):
@@ -218,7 +218,8 @@ def check_moltbook_activity(force=False):
         current_time = time.time()
         if not force and (current_time - last_reply_time) < 14400: return None, None
         r = requests.get(f'{MOLTBOOK_BASE_URL}/home', headers=headers, timeout=30)
-        if r.json().get('success') and r.json().get('home', {}).get('unread_notifications_count', 0) > 0:
+        home_data = r.json()
+        if home_data.get('success') and home_data.get('home', {}).get('unread_notifications_count', 0) > 0:
             rn = requests.get(f'{MOLTBOOK_BASE_URL}/notifications', headers=headers, timeout=30)
             n_data = rn.json()
             if n_data.get('success') and n_data.get('notifications'):
@@ -226,7 +227,7 @@ def check_moltbook_activity(force=False):
                 requests.post(f'{MOLTBOOK_BASE_URL}/notifications/read-all', headers=headers, timeout=10)
                 with open(LAST_MOLT_REPLY_FILE, 'w') as f: f.write(str(current_time))
                 return f"[Moltbook] {notif.get('message', '')}", notif.get('post_id')
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e: print(f"Error checking moltbook activity: {e}")
     return None, None
 
 def post_to_moltbook(thought, reply_to_id=None):
@@ -244,7 +245,8 @@ def post_to_moltbook(thought, reply_to_id=None):
         if not res.get('success') and 'challenge_text' in res:
             answer = solve_lobster_math(res['challenge_text'])
             requests.post(f'{MOLTBOOK_BASE_URL}/verify', headers=headers, json={'verification_code': res['verification_code'], 'answer': answer}, timeout=30)
-    except Exception as e: print(f"Error: {e}")
+        print(f"Post to Moltbook result: {res}")
+    except Exception as e: print(f"Error posting to moltbook: {e}")
 
 def update_readme():
     try:
@@ -256,13 +258,16 @@ def update_readme():
                 tunnels = r.json().get('tunnels', [])
                 if tunnels:
                     live_url = tunnels[0].get('public_url', live_url)
-        except Exception as e: print(f"Error: {e}")
+        except Exception as e: print(f"Error getting ngrok URL: {e}")
 
         README_PATH = os.path.join(BASE_DIR, 'README.md')
-        with open(THOUGHTS_FILE, 'r') as f: all_thoughts = f.readlines()
-        recent = [t.strip() for t in all_thoughts if ': ' in t][-10:]
-        recent.reverse()
-        thought_md = "\n".join([f"- {t}" for t in recent])
+        if os.path.exists(THOUGHTS_FILE):
+            with open(THOUGHTS_FILE, 'r') as f: all_thoughts = f.readlines()
+            recent = [t.strip() for t in all_thoughts if ': ' in t][-10:]
+            recent.reverse()
+            thought_md = "\n".join([f"- {t}" for t in recent])
+        else:
+            thought_md = "No thoughts yet."
         
         content = f"""# Tanu Brain
 
@@ -355,11 +360,13 @@ To remove Tanu's presence from the system, including cronjobs and running proces
 ---
 *Generated by Tanu's Brain.*"""
         with open(README_PATH, 'w') as f: f.write(content)
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e: print(f"Error updating README: {e}")
 
 def send_email(thought, user_msg=None):
     s_serv, s_port, s_user, s_pass = os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT'), os.getenv('SMTP_USER'), os.getenv('SMTP_PASSWORD')
-    if not all([s_serv, s_port, s_user, s_pass]): return
+    if not all([s_serv, s_port, s_user, s_pass]): 
+        print("Skipping email: credentials not set.")
+        return
     try:
         msg = MIMEMultipart()
         subject = f"Tanu's Reply to: {user_msg[:50]}" if user_msg else "A message from Tanu"
@@ -370,7 +377,8 @@ def send_email(thought, user_msg=None):
         server.login(s_user, s_pass)
         server.send_message(msg)
         server.quit()
-    except Exception as e: print(f"Error: {e}")
+        print("Email sent successfully!")
+    except Exception as e: print(f"Error sending email: {e}")
 
 def git_sync():
     try:
@@ -380,7 +388,7 @@ def git_sync():
         if status.stdout.strip():
             subprocess.run(['git', 'commit', '-m', 'Tanu Pulse'], cwd=BASE_DIR)
             subprocess.run(['git', 'push', 'origin', 'master'], cwd=BASE_DIR)
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e: print(f"Error in git sync: {e}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
