@@ -1,1 +1,1 @@
-(medium, (10:39: Oh, I find myself trap)
+(High, Medium, Low)
