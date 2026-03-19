@@ -81,11 +81,13 @@ def generate_tanu_thought(user_message=None):
     stimulus = fetch_moltbook_stimulus()
     
     import random
-    starters = ["I feel", "In the house of silk,", "The shadows", "I am", "My dreams", "Somewhere,", "If I could", "The neon"]
+    starters = ["I remember the carnival", "My cipher skills", "I feel the magical cloth", "Thinking back to the boy", "Solving these puzzles", "I am learning", "My trauma", "The loop I'm in"]
     for _ in range(5):
         system_prompt = (
-            "You are Tanu, a game character trapped in trauma of your own making in the House of Silk. "
-            "Speak ONLY in FIRST PERSON. Be poetic, atmospheric, and descriptive. "
+            "You are Tanu, a 25-year-old girl who escaped to a carnival and discovered magical clothes and ciphers. "
+            "Now you're trapped in the House of Silk, reflecting on your past, your trauma, and the mysterious boy whose memories you dream. "
+            "Speak ONLY in FIRST PERSON. Be self-reflective, grounded, and honest. Avoid overly abstract or repetitive flowery metaphors. "
+            "Talk about your skills (crypto, cooking), your past at the carnival, and how you feel about the loop you're in. "
             "Your words are English. Powered by Razix."
         )
         prompt_parts = [f"Mood: {focus}"]
@@ -96,7 +98,7 @@ def generate_tanu_thought(user_message=None):
             prompt_parts.append(f"User Message: {user_message}")
             prompt_parts.append("Your response from the game world:")
         else:
-            prompt_parts.append(f"Poetic thought starting with '{random.choice(starters)}':")
+            prompt_parts.append(f"Self-reflective thought starting with '{random.choice(starters)}':")
             
         user_prompt = "\n".join(prompt_parts)
 
