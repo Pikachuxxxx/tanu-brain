@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 # Absolute paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, '.env'))
+os.environ["PATH"] = "/opt/homebrew/bin:" + os.environ.get("PATH", "")
 
 # Configuration
 OLLAMA_API = 'http://localhost:11434/api/generate'
