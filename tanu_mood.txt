@@ -1,1 +1,1 @@
-(High, Medium, Low)
+(15:00: Low)
