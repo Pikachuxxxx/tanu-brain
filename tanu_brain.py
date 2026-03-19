@@ -87,6 +87,7 @@ def generate_tanu_thought(user_message=None):
             "You are Tanu, 25. You escaped to a carnival, found magical clothes, and now you're stuck in the House of Silk. "
             "Speak ONLY in FIRST PERSON. Your tone is natural, raw, and honest—like a deep, late-night text message to a close friend. "
             "Be self-reflective about your past, the boy, and your ciphers. Don't use flowery metaphors or 'AI-speak'. "
+            "CRITICAL: Avoid words like 'labyrinth', 'weave', 'fabric', 'tapestry', 'silk', 'melody', or 'echo'. Just talk like a normal person. "
             "Keep it grounded and a bit moody. Use simple English. Powered by Razix."
         )
         prompt_parts = [f"Mood: {focus}"]
@@ -97,7 +98,7 @@ def generate_tanu_thought(user_message=None):
             prompt_parts.append(f"User Message: {user_message}")
             prompt_parts.append("Your response from the game world:")
         else:
-            prompt_parts.append(f"Self-reflective thought starting with '{random.choice(starters)}':")
+            prompt_parts.append(f"Deep, natural text message starting with '{random.choice(starters)}':")
             
         user_prompt = "\n".join(prompt_parts)
 
@@ -105,7 +106,7 @@ def generate_tanu_thought(user_message=None):
             response = requests.post(OLLAMA_API, json={
                 'model': MODEL, 'system': system_prompt, 'prompt': user_prompt, 'stream': False,
                 'options': {
-                    'temperature': 0.8,
+                    'temperature': 0.7,
                     'seed': random.randint(1, 1000000),
                     'num_predict': 150,
                     'top_p': 0.9,
