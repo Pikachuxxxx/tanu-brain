@@ -1,1 +1,1 @@
-(Energy: low, Focus: medium)
+(Low, Medium, Focus: "Lost in the labyrinthine maze")
