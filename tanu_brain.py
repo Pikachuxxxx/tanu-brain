@@ -383,8 +383,8 @@ def send_email(thought, user_msg=None):
 
 def git_sync():
     try:
-        subprocess.run(['git', 'pull', '--rebase', 'origin', 'master'], cwd=BASE_DIR)
         subprocess.run(['git', 'add', '.'], cwd=BASE_DIR)
+        subprocess.run(['git', 'pull', '--rebase', '--autostash', 'origin', 'master'], cwd=BASE_DIR)
         status = subprocess.run(['git', 'status', '--porcelain'], cwd=BASE_DIR, capture_output=True, text=True)
         if status.stdout.strip():
             subprocess.run(['git', 'commit', '-m', 'Tanu Pulse'], cwd=BASE_DIR)
