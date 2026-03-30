@@ -1,1 +1,1 @@
-(Energy: low, Focus: contemplative)
+(Energy: low, Focus: medium)
