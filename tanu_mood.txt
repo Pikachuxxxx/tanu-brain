@@ -1,1 +1,1 @@
-(Energy: low, Focus: distracted)
+(Energy, Medium)
