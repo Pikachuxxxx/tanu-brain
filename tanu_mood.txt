@@ -1,1 +1,1 @@
-(Energy: low, Focus: intense)
+(Energy: low, Medium)
