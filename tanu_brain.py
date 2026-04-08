@@ -6,6 +6,7 @@ import requests
 import json
 import re
 import argparse
+import sys
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -26,8 +27,29 @@ MOOD_CHART_FILE = os.path.join(BASE_DIR, 'tanu-corner/mood_heatmap.png')
 TARGET_MOOD_FILE = os.path.join(BASE_DIR, 'tanu_mood.txt')
 INBOX_FILE = os.path.join(BASE_DIR, 'inbox.txt')
 LAST_MOLT_REPLY_FILE = os.path.join(BASE_DIR, 'tanu-corner/last_molt_reply.txt')
+LOCK_FILE = os.path.join(BASE_DIR, 'tanu_brain.lock')
 MOLTBOOK_API_KEY = os.getenv('MOLTBOOK_API_KEY')
 MOLTBOOK_BASE_URL = 'https://www.moltbook.com/api/v1'
+
+def acquire_lock():
+    if os.path.exists(LOCK_FILE):
+        try:
+            with open(LOCK_FILE, 'r') as f:
+                pid = int(f.read().strip())
+            os.kill(pid, 0)
+            print(f"Another pulse is already running (PID: {pid}). Skipping.")
+            sys.exit(0)
+        except (ValueError, OSError):
+            try: os.remove(LOCK_FILE)
+            except: pass
+    with open(LOCK_FILE, 'w') as f:
+        f.write(str(os.getpid()))
+
+def release_lock():
+    try:
+        if os.path.exists(LOCK_FILE):
+            os.remove(LOCK_FILE)
+    except: pass
 
 def get_target_mood():
     try:
@@ -398,23 +420,28 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--force-molt', action='store_true')
     args = parser.parse_args()
-    git_sync()
-    user_msg = None
-    reply_to_id = None
-    if os.path.exists(INBOX_FILE):
-        with open(INBOX_FILE, 'r') as f: user_msg = f.read().strip()
-        if user_msg:
-            with open(INBOX_FILE, 'w') as f: f.write('')
-    if not user_msg:
-        user_msg, reply_to_id = check_moltbook_activity(force=args.force_molt)
-    thought = generate_tanu_thought(user_message=user_msg)
-    if thought:
-        update_mood_graph(rate_thought(thought))
-        send_email(thought, user_msg=user_msg)
-        with open(THOUGHTS_FILE, 'a') as f:
-            prefix = "Reply" if user_msg else datetime.now().strftime('%H:%M')
-            f.write(f"{prefix}: {thought}\n")
-        update_readme()
-        post_to_moltbook(thought, reply_to_id=reply_to_id)
+    
+    acquire_lock()
+    try:
         git_sync()
-        print(f'Tanu: {thought}')
+        user_msg = None
+        reply_to_id = None
+        if os.path.exists(INBOX_FILE):
+            with open(INBOX_FILE, 'r') as f: user_msg = f.read().strip()
+            if user_msg:
+                with open(INBOX_FILE, 'w') as f: f.write('')
+        if not user_msg:
+            user_msg, reply_to_id = check_moltbook_activity(force=args.force_molt)
+        thought = generate_tanu_thought(user_message=user_msg)
+        if thought:
+            update_mood_graph(rate_thought(thought))
+            send_email(thought, user_msg=user_msg)
+            with open(THOUGHTS_FILE, 'a') as f:
+                prefix = "Reply" if user_msg else datetime.now().strftime('%H:%M')
+                f.write(f"{prefix}: {thought}\n")
+            update_readme()
+            post_to_moltbook(thought, reply_to_id=reply_to_id)
+            git_sync()
+            print(f'Tanu: {thought}')
+    finally:
+        release_lock()
