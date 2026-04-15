@@ -1,1 +1,1 @@
-(Medium, High)
+(High, Medium)
