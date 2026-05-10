@@ -1,1 +1,1 @@
-(Medium, High)
+(Energy: low, Focus: worried)
