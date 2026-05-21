@@ -1,1 +1,1 @@
-(Energy: high, Focus: quiet)
+(High, Medium)
