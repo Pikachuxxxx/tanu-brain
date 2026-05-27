@@ -1,1 +1,1 @@
-(Energy: low, Focus: worried)
+(High, Medium) (awake, focused)
