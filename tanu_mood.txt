@@ -1,1 +1,1 @@
-(Energy, Low)
+(High, Medium)
