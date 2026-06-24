@@ -1,1 +1,1 @@
-(High, Medium) (Stuck, Exhausted)
+(High, Medium)
