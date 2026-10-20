@@ -1201,3 +1201,4 @@ A lonely ache that's not quite mine.
 05:03: You're trapped in a strange house.
 Your heart races as the door creaks open,
 The sound of footsteps echoing through the halls.
+06:03: oh god i'm so lost! where are we? can't find our way back... it feels like time is running out to me.
