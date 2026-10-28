@@ -1,1 +1,1 @@
-(High, Medium, High)
+(low, drifting)
