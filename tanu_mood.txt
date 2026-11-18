@@ -1,1 +1,1 @@
-(High, Medium, Out of Place)
+(High, Medium, Medium)
