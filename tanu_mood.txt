@@ -1,1 +1,1 @@
-(Low, Medium, Focus: "Lost in the chaos of the house and the unknown world beyond.")
+(low, drifting)
