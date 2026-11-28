@@ -1,1 +1,1 @@
-(Energy: low, Focus: medium)
+(low, drifting)
